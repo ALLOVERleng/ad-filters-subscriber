@@ -122,7 +122,7 @@ application:
 
   output:
     file_header: |
-      Title: xndeye adblock list of ${type}
+      Title: wiz adblock list of ${type}
       Last Modified: ${date}
       Homepage: https://github.com/xndeye/adblock_list
 

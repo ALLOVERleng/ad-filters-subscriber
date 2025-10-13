@@ -42,16 +42,16 @@ application:
         path: https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_14_Annoyances/filter.txt
         type: easylist
 
-      - name: AdGuard 解除搜索广告和自我推销过滤器
-        path: https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_10_Useful/filter.txt
+      - name: Online Malicious URL Blocklist
+        path: https://urlhaus-filter.pages.dev/urlhaus-filter-ag-online.txt
         type: easylist
 
       - name: AdGuard 小工具过滤器
         path: https://filters.adtidy.org/android/filters/22_optimized.txt
         type: easylist
 
-      - name: AWAvenue-Adblock-Rule
-        path: https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/AWAvenue-Ads-Rule.txt
+      - name: 解除广告和自我推销过滤器
+        path: https://filters.adtidy.org/android/filters/10_optimized.txt
         type: easylist
 
       - name: NoAppDownload
@@ -91,12 +91,34 @@ application:
 
       - name: GoodbyeAds-Samsung
         path: https://cdn.jsdelivr.net/gh/jerryn70/GoodbyeAds@master/Extension/GoodbyeAds-Samsung-AdBlock.txt
-
-
-    local:
-      - name: 'xndeye private adblock list'
-        path: 'rule/private.txt'
+   
+      - name: TT拒绝列表
+        path: https://ghproxy.net/https://raw.githubusercontent.com/TTDNS/Cat/refs/heads/main/TT%E6%8B%92%E7%BB%9D%E5%88%97%E8%A1%A8%E6%B8%85%E5%8D%95%20(%E6%9B%B4%E6%96%B0%E4%B8%AD).txt
+  
+      - name: AdGuard Tracking Protection filter (Optimized)
+        path: https://filters.adtidy.org/android/filters/3_optimized.txt
         type: easylist
+ 
+      - name: Bypass Paywalls Clean filter
+        path: https://gitflic.ru/project/magnolia1234/bypass-paywalls-clean-filters/blob/raw?file=bpc-paywall-filter.txt
+
+      - name: 晴雅广告拦截规则重置版支持IOS
+        path: http://rssv.cn/adguard/api.php?type=black
+      
+      - name: HyperADRules
+        path: https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/rules.txt
+
+      - name: all.txt
+        path: https://raw.githubusercontent.com/afwfv/DD-AD/main/rule/all.txt
+
+      - name: 去广告规则，酷安反馈反馈
+        path: https://raw.githubusercontent.com/qq5460168/666/refs/heads/master/rules.txt
+
+      - name: AdRules 橘猫
+        path: https://adrules.5iclub.us.kg/adblock.txt
+    
+
+
 
   output:
     file_header: |

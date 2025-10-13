@@ -124,6 +124,7 @@ application:
     file_header: |
       Title: wiz adblock list of ${type}
       Last Modified: ${date}
+      Homepage: https://github.com/ALLOVERleng/ad-filters-subscriber
     
     files:
       - name: easylist.txt
@@ -136,7 +137,7 @@ application:
       - name: dns.txt
         type: easylist
         file_header: |
-          Title: xndeye adblock list of dns 
+          Title: wiz adblock list of dns 
           Last Modified: ${date}
         filter:
           - basic

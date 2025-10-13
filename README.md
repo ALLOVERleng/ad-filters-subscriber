@@ -195,47 +195,47 @@ mvn spring-boot:run
 | `hosts`         | 几乎所有操作系统原生支持                |  [link][hosts-raw]   |  [link][hosts-ghproxy]   |  [link][hosts-jsdelivr]   |
 | `private.txt`   | 本仓库维护的私有规则，以 easylist 形式提供  | [link][private-raw]  | [link][private-ghproxy]  | [link][private-jsdelivr]  |
 
-[easylist-raw]: https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/easylist.txt
+[easylist-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/easylist.txt
 
-[easylist-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/easylist.txt
+[easylist-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/easylist.txt
 
-[easylist-jsdelivr]: https://gcore.jsdelivr.net/gh/xndeye/adblock_list@refs/heads/release/easylist.txt
+[easylist-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@refs/heads/release/easylist.txt
 
-[modify-raw]: https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/modify.txt
+[modify-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/modify.txt
 
-[modify-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/modify.txt
+[modify-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/modify.txt
 
-[modify-jsdelivr]: https://gcore.jsdelivr.net/gh/xndeye/adblock_list@refs/heads/release/modify.txt
+[modify-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@refs/heads/release/modify.txt
 
-[dns-raw]: https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/dns.txt
+[dns-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/dns.txt
 
-[dns-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/dns.txt
+[dns-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/dns.txt
 
-[dns-jsdelivr]: https://gcore.jsdelivr.net/gh/xndeye/adblock_list@refs/heads/release/dns.txt
+[dns-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@refs/heads/release/dns.txt
 
-[dnsmasq-raw]: https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/dnsmasq.conf
+[dnsmasq-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/dnsmasq.conf
 
-[dnsmasq-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/dnsmasq.conf
+[dnsmasq-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/dnsmasq.conf
 
-[dnsmasq-jsdelivr]: https://gcore.jsdelivr.net/gh/xndeye/adblock_list@refs/heads/release/dnsmasq.conf
+[dnsmasq-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@refs/heads/release/dnsmasq.conf
 
-[clash-raw]: https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/clash.yaml
+[clash-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/clash.yaml
 
-[clash-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/clash.yaml
+[clash-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/clash.yaml
 
-[clash-jsdelivr]: https://gcore.jsdelivr.net/gh/xndeye/adblock_list@refs/heads/release/clash.yaml
+[clash-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@refs/heads/release/clash.yaml
 
-[smartdns-raw]: https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/smartdns.conf
+[smartdns-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/smartdns.conf
 
-[smartdns-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/smartdns.conf
+[smartdns-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/smartdns.conf
 
-[smartdns-jsdelivr]: https://gcore.jsdelivr.net/gh/xndeye/adblock_list@refs/heads/release/smartdns.conf
+[smartdns-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@refs/heads/release/smartdns.conf
 
-[hosts-raw]: https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/hosts
+[hosts-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/hosts
 
-[hosts-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/hosts
+[hosts-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/hosts
 
-[hosts-jsdelivr]: https://gcore.jsdelivr.net/gh/xndeye/adblock_list@refs/heads/release/hosts
+[hosts-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@refs/heads/release/hosts
 下面是使用了本项目进行构建的规则仓库，可在其中寻找合适的规则订阅:
 <details>
 <summary>点击查看</summary>

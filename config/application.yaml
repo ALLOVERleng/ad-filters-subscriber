@@ -124,8 +124,7 @@ application:
     file_header: |
       Title: wiz adblock list of ${type}
       Last Modified: ${date}
-      Homepage: https://github.com/xndeye/adblock_list
-
+    
     files:
       - name: easylist.txt
         type: easylist
@@ -139,7 +138,6 @@ application:
         file_header: |
           Title: xndeye adblock list of dns 
           Last Modified: ${date}
-          Homepage: https://github.com/xndeye/adblock_list
         filter:
           - basic
           - wildcard

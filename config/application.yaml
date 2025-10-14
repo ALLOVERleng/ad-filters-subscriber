@@ -117,9 +117,33 @@ application:
       - name: AdRules 橘猫
         path: https://adrules.5iclub.us.kg/adblock.txt
     
+      - name: NEO DEV HOST
+        path: https://raw.githubusercontent.com/neodevpro/neodevhost/master/adblocker
 
+      - name: AdBlock Filter
+        path: https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockfilters.txt
 
+      - name: AdBlock DNS
+        path: https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdns.txt 
+        
+      - name: 去广告规则，反馈🐧群请点击主页
+        path: https://raw.githubusercontent.com/qq5460168/dangchu/main/black.txt
 
+      - name: 去广告规则，反馈🐧群请点击主页
+        path: https://raw.githubusercontent.com/qq5460168/dangchu/main/white.txt    
+ 
+      - name: HaGeZi's Pro DNS Blocklist
+        path: https://raw.githubusercontent.com/hagezi/dns-blocklists/refs/heads/main/adblock/pro.txt
+
+      - name: 1Hosts (Lite)
+        path: https://raw.githubusercontent.com/badmojr/1Hosts/refs/heads/master/Lite/adblock.txt
+        
+      - name: JiuYue_Rules
+        path: https://rules.vlo.cc/dns/dns.txt        
+        
+      - name: HyperADRules
+        path: https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/allow.txt       
+        
   output:
     file_header: |
       Title: wiz adblock list of ${type}

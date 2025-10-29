@@ -72,12 +72,18 @@ application:
       - name: HyperADRules
         path: https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/rules.txt
 
+      - name: HyperADRules
+        path: https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/allow.txt
+
       - name: all.txt
         path: https://raw.githubusercontent.com/afwfv/DD-AD/main/rule/all.txt
 
       - name: 去广告规则，酷安反馈反馈
         path: https://raw.githubusercontent.com/qq5460168/666/refs/heads/master/rules.txt
-
+        
+      - name: 去广告规则，酷安反馈反馈
+        path: https://raw.githubusercontent.com/qq5460168/666/master/allow.txt
+        
       - name: AdRules 橘猫
         path: https://adrules.5iclub.us.kg/adblock.txt
     

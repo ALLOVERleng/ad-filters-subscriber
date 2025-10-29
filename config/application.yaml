@@ -50,47 +50,8 @@ application:
         path: https://filters.adtidy.org/android/filters/22_optimized.txt
         type: easylist
 
-#      - name: 解除广告和自我推销过滤器
-#        path: https://filters.adtidy.org/android/filters/10_optimized.txt
-#        type: easylist
-
-#      - name: NoAppDownload
-#        path: https://raw.githubusercontent.com/Noyllopa/NoAppDownload/master/NoAppDownload.txt
-#        type: easylist
-
-#      - name: xndeye web-ad-rule
-#        path: https://raw.githubusercontent.com/xndeye/web-ad-rule/master/easylist.txt
-#        type: easylist
-
-#      - name: xinggsf movie
-#        path: https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/mv.txt
-
-#      - name: damengzhu jiekouAD
-#        path: https://raw.githubusercontent.com/damengzhu/banad/main/jiekouAD.txt
-
-#      - name: cjxlist annoyance
-#        path: https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-annoyance.txt
-
-#      - name: ABP filters
-#        path: https://easylist-downloads.adblockplus.org/antiadblockfilters.txt
-
       - name: ABP 反广告过滤
         path: https://easylist-downloads.adblockplus.org/abp-filters-anti-cv.txt
-
-#      - name: uBlockOrigin privacy
-#        path: https://raw.githubusercontent.com/uBlockOrigin/uAssets/refs/heads/master/filters/privacy.txt
-
-#      - name: Telemetry Lists - Aggregated
-#        path: https://raw.githubusercontent.com/SystemJargon/filters/refs/heads/main/telemetry.txt
-
-#      - name: GoodbyeAds-Xiaomi
-#        path: https://cdn.jsdelivr.net/gh/jerryn70/GoodbyeAds@master/Extension/GoodbyeAds-Xiaomi-Extension.txt
-
-#      - name: GoodbyeAds-Huawei
-#        path: https://cdn.jsdelivr.net/gh/jerryn70/GoodbyeAds@master/Extension/GoodbyeAds-Huawei-AdBlock.txt
-
-#      - name: GoodbyeAds-Samsung
-#        path: https://cdn.jsdelivr.net/gh/jerryn70/GoodbyeAds@master/Extension/GoodbyeAds-Samsung-AdBlock.txt
 
       - name: xndeye adblock list of easylist
         path: https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/easylist.txt

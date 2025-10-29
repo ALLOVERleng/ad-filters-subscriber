@@ -50,47 +50,50 @@ application:
         path: https://filters.adtidy.org/android/filters/22_optimized.txt
         type: easylist
 
-      - name: 解除广告和自我推销过滤器
-        path: https://filters.adtidy.org/android/filters/10_optimized.txt
-        type: easylist
+#      - name: 解除广告和自我推销过滤器
+#        path: https://filters.adtidy.org/android/filters/10_optimized.txt
+#        type: easylist
 
-      - name: NoAppDownload
-        path: https://raw.githubusercontent.com/Noyllopa/NoAppDownload/master/NoAppDownload.txt
-        type: easylist
+#      - name: NoAppDownload
+#        path: https://raw.githubusercontent.com/Noyllopa/NoAppDownload/master/NoAppDownload.txt
+#        type: easylist
 
-      - name: xndeye web-ad-rule
-        path: https://raw.githubusercontent.com/xndeye/web-ad-rule/master/easylist.txt
-        type: easylist
+#      - name: xndeye web-ad-rule
+#        path: https://raw.githubusercontent.com/xndeye/web-ad-rule/master/easylist.txt
+#        type: easylist
 
-      - name: xinggsf movie
-        path: https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/mv.txt
+#      - name: xinggsf movie
+#        path: https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/mv.txt
 
-      - name: damengzhu jiekouAD
-        path: https://raw.githubusercontent.com/damengzhu/banad/main/jiekouAD.txt
+#      - name: damengzhu jiekouAD
+#        path: https://raw.githubusercontent.com/damengzhu/banad/main/jiekouAD.txt
 
-      - name: cjxlist annoyance
-        path: https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-annoyance.txt
+#      - name: cjxlist annoyance
+#        path: https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-annoyance.txt
 
-      - name: ABP filters
-        path: https://easylist-downloads.adblockplus.org/antiadblockfilters.txt
+#      - name: ABP filters
+#        path: https://easylist-downloads.adblockplus.org/antiadblockfilters.txt
 
       - name: ABP 反广告过滤
         path: https://easylist-downloads.adblockplus.org/abp-filters-anti-cv.txt
 
-      - name: uBlockOrigin privacy
-        path: https://raw.githubusercontent.com/uBlockOrigin/uAssets/refs/heads/master/filters/privacy.txt
+#      - name: uBlockOrigin privacy
+#        path: https://raw.githubusercontent.com/uBlockOrigin/uAssets/refs/heads/master/filters/privacy.txt
 
-      - name: Telemetry Lists - Aggregated
-        path: https://raw.githubusercontent.com/SystemJargon/filters/refs/heads/main/telemetry.txt
+#      - name: Telemetry Lists - Aggregated
+#        path: https://raw.githubusercontent.com/SystemJargon/filters/refs/heads/main/telemetry.txt
 
-      - name: GoodbyeAds-Xiaomi
-        path: https://cdn.jsdelivr.net/gh/jerryn70/GoodbyeAds@master/Extension/GoodbyeAds-Xiaomi-Extension.txt
+#      - name: GoodbyeAds-Xiaomi
+#        path: https://cdn.jsdelivr.net/gh/jerryn70/GoodbyeAds@master/Extension/GoodbyeAds-Xiaomi-Extension.txt
 
-      - name: GoodbyeAds-Huawei
-        path: https://cdn.jsdelivr.net/gh/jerryn70/GoodbyeAds@master/Extension/GoodbyeAds-Huawei-AdBlock.txt
+#      - name: GoodbyeAds-Huawei
+#        path: https://cdn.jsdelivr.net/gh/jerryn70/GoodbyeAds@master/Extension/GoodbyeAds-Huawei-AdBlock.txt
 
-      - name: GoodbyeAds-Samsung
-        path: https://cdn.jsdelivr.net/gh/jerryn70/GoodbyeAds@master/Extension/GoodbyeAds-Samsung-AdBlock.txt
+#      - name: GoodbyeAds-Samsung
+#        path: https://cdn.jsdelivr.net/gh/jerryn70/GoodbyeAds@master/Extension/GoodbyeAds-Samsung-AdBlock.txt
+
+      - name: xndeye adblock list of easylist
+        path: https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/easylist.txt
    
       - name: TT拒绝列表
         path: https://ghproxy.net/https://raw.githubusercontent.com/TTDNS/Cat/refs/heads/main/TT%E6%8B%92%E7%BB%9D%E5%88%97%E8%A1%A8%E6%B8%85%E5%8D%95%20(%E6%9B%B4%E6%96%B0%E4%B8%AD).txt
@@ -129,8 +132,8 @@ application:
       - name: 去广告规则，反馈🐧群请点击主页
         path: https://raw.githubusercontent.com/qq5460168/dangchu/main/black.txt
 
-      - name: 去广告规则，反馈🐧群请点击主页
-        path: https://raw.githubusercontent.com/qq5460168/dangchu/main/white.txt    
+      - name: DD-AD
+        path: https://raw.githubusercontent.com/afwfv/DD-AD/refs/heads/release/easylist.txt
  
       - name: HaGeZi's Pro DNS Blocklist
         path: https://raw.githubusercontent.com/hagezi/dns-blocklists/refs/heads/main/adblock/pro.txt

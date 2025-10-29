@@ -144,9 +144,7 @@ application:
       - name: JiuYue_Rules
         path: https://rules.vlo.cc/dns/dns.txt        
         
-      - name: HyperADRules
-        path: https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/allow.txt       
-        
+       
   output:
     file_header: |
       Title: wiz adblock list of ${type}

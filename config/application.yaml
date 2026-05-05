@@ -105,7 +105,7 @@ application:
       Title: great adblock list of ${type}
       Total Size: ${total}
       Last Modified: ${date}
-      Homepage: https://github.com/chene2025/ad-filters-subscriber
+      Homepage: https://github.com/ALLOVERleng/ad-filters-subscriber
 
     files:
       - name: easylist.txt

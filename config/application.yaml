@@ -196,9 +196,9 @@ adfs:
 
   config:
     file_header: |
-      Title: great adblock list of ${type}
-      Total Size: ${total}
-      Last Modified: ${date}
+      Title: great adblock list of {{type}}
+      Total Size: {{total}}
+      Last Modified: {{date}}
       Homepage: https://github.com/ALLOVERleng/ad-filters-subscriber
       Powered by: https://github.com/fordes123/ad-filters-subscriber
 

@@ -7,7 +7,7 @@ adfs:
 
     - name: AdGuard 其他恼人广告过滤器
       path: https://filters.adtidy.org/android/filters/21_optimized.txt
-      type: easylist
+      type: adblock
 
     - name: 晴雅广告拦截规则
       path: https://raw.githubusercontent.com/rssvcn/qy-Ads-Rule/main/black.txt
@@ -15,27 +15,27 @@ adfs:
 
     - name: AdGuard Cookie通知过滤器
       path: https://filters.adtidy.org/android/filters/18_optimized.txt
-      type: easylist
+      type: adblock
 
     - name: AdGuard 弹窗过滤器
       path: https://filters.adtidy.org/android/filters/19_optimized.txt
-      type: easylist
+      type: adblock
 
     - name: AdGuard 移动拦截程序横幅广告的过滤器
       path: https://filters.adtidy.org/android/filters/20_optimized.txt
-      type: easylist
+      type: adblock
 
     - name: AdGuard 恼人广告过滤器
       path: https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_14_Annoyances/filter.txt
-      type: easylist
+      type: adblock
 
     - name: Online Malicious URL Blocklist
       path: https://urlhaus-filter.pages.dev/urlhaus-filter-ag-online.txt
-      type: easylist
+      type: adblock
 
     - name: AdGuard 小工具过滤器
       path: https://filters.adtidy.org/android/filters/22_optimized.txt
-      type: easylist
+      type: adblock
 
     - name: xndeye web-ad-rule
       path: https://raw.githubusercontent.com/xndeye/web-ad-rule/master/easylist.txt
@@ -69,7 +69,7 @@ adfs:
 
     - name: Telemetry Lists - Aggregated
       path: https://raw.githubusercontent.com/SystemJargon/filters/refs/heads/main/telemetry.txt
-      type: dns
+      type: adblock
       dialect: adguard
 
     - name: HyperADRules allow ads
@@ -83,7 +83,7 @@ adfs:
 
     - name: AdGuard Tracking Protection filter (Optimized)
       path: https://filters.adtidy.org/android/filters/3_optimized.txt
-      type: easylist
+      type: adblock
 
     - name: Bypass Paywalls Clean filter
       path: https://gitflic.ru/project/magnolia1234/bypass-paywalls-clean-filters/blob/raw?file=bpc-paywall-filter.txt
@@ -91,7 +91,7 @@ adfs:
 
     - name: DD-AD
       path: https://raw.githubusercontent.com/afwfv/DD-AD/refs/heads/release/easylist.txt
-      type: easylist
+      type: adblock
 
     - name: 去广告规则，酷安反馈反馈
       path: https://raw.githubusercontent.com/qq5460168/666/refs/heads/master/rules.txt
@@ -128,7 +128,7 @@ adfs:
 
     - name: HaGeZi's Pro DNS Blocklist
       path: https://raw.githubusercontent.com/hagezi/dns-blocklists/refs/heads/main/adblock/pro.txt
-      type: dns
+      type: adblock
 
     - name: 去广告规则，反馈🐧群请点击主页
       path: https://raw.githubusercontent.com/qq5460168/dangchu/main/black.txt

@@ -83,18 +83,18 @@ adfs:
 
     - name: AdGuard Tracking Protection filter (Optimized)
       path: https://filters.adtidy.org/android/filters/3_optimized.txt
-      type: easylist 
+      type: easylist
 
-	- name: Bypass Paywalls Clean filter
+    - name: Bypass Paywalls Clean filter
       path: https://gitflic.ru/project/magnolia1234/bypass-paywalls-clean-filters/blob/raw?file=bpc-paywall-filter.txt
       type: adblock
 
-	- name: DD-AD
+    - name: DD-AD
       path: https://raw.githubusercontent.com/afwfv/DD-AD/refs/heads/release/easylist.txt
       type: easylist
 
     - name: 去广告规则，酷安反馈反馈
-      path: https://raw.githubusercontent.com/qq5460168/666/refs/heads/master/rules.txt	  
+      path: https://raw.githubusercontent.com/qq5460168/666/refs/heads/master/rules.txt
       type: adblock
 
     - name: AdRules 橘猫
@@ -110,7 +110,7 @@ adfs:
       type: adblock
 
     - name: DNS-Kuner
-      path: https://raw.githubusercontent.com/Kuner-mw/DNS-Kuner/main/FilterRules/blacklist.txt 
+      path: https://raw.githubusercontent.com/Kuner-mw/DNS-Kuner/main/FilterRules/blacklist.txt
       type: adblock
 
     - name: DNS-Kuner Allow
@@ -118,7 +118,7 @@ adfs:
       type: adblock
 
     - name: JiuYue_Rules
-      path: https://rules.vlo.cc/dns/dns.txt    
+      path: https://rules.vlo.cc/dns/dns.txt
       type: adblock
 
     - name: '1Hosts Lite'
@@ -144,19 +144,19 @@ adfs:
 
     - name: AdguardFilter标准
       path: https://raw.githubusercontent.com/miaoermua/AdguardFilter/main/rule.txt
-      type: adblock  
+      type: adblock
 
-	- name: AdguardFilter黑名单
+    - name: AdguardFilter黑名单
       path: https://raw.githubusercontent.com/miaoermua/AdguardFilter/main/bad_apple.txt
       type: adblock
 
-	- name: AdguardFilter白名单
+    - name: AdguardFilter白名单
       path: https://raw.githubusercontent.com/miaoermua/AdguardFilter/main/whitelist.txt
       type: adblock
 
-	- name: liu50341759
+    - name: liu50341759
       path: https://github.com/liu50341759/killad/raw/refs/heads/main/rule/all.txt
-      type: adblock	  
+      type: adblock
 
   output:
     - name: easylist.txt

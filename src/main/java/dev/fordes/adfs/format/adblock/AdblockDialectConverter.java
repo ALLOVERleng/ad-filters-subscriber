@@ -24,8 +24,14 @@ public final class AdblockDialectConverter {
             "match-case", "elemhide", "generichide");
     private static final Set<String> ADGUARD_UBO_OPTIONS = Set.of(
             "to", "denyallow", "method", "specifichide", "removeparam");
+    /**
+     * AdGuard 与 uBO 都实现、可在 {@code ##} 规则中互转的扩展选择器操作符。
+     *
+     * <p>{@code :style()} 只有 uBO 支持写在 {@code ##} 里（AdGuard 需用 {@code #$#}），
+     * 目标为 AdGuard 的情况已由 {@link #supportedByTarget} 提前拒绝。</p>
+     */
     private static final Set<String> SHARED_ADGUARD_UBO_CSS_MARKERS = Set.of(
-            ":remove(", ":xpath(");
+            ":remove(", ":xpath(", ":style(");
     private static final List<String> NON_PORTABLE_CSS_MARKERS = List.of(
             ":-abp-", ":contains(", ":has-text(", ":matches-attr(", ":matches-css(",
             ":matches-property(", ":matches-prop(", ":matches-path(", ":min-text-length(",

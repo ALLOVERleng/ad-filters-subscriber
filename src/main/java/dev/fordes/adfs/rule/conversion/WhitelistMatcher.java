@@ -34,8 +34,9 @@ public final class WhitelistMatcher {
 
     private static boolean matches(DomainPattern pattern, DomainName allowed) {
         return switch (pattern) {
-            case ExactDomain(var domain), Subdomain(var domain), SuffixDomain(var domain) ->
-                    covers(domain, allowed);
+            case ExactDomain(var domain) -> covers(domain, allowed);
+            case Subdomain(var domain) -> covers(domain, allowed);
+            case SuffixDomain(var domain) -> covers(domain, allowed);
             default -> false;
         };
     }

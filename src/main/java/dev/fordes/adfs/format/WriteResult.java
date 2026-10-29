@@ -5,5 +5,7 @@ public enum WriteResult {
     PASSTHROUGH,
     DUPLICATE,
     WHITELIST_REMOVED,
-    UNSUPPORTED
+    UNSUPPORTED,
+    /** 按输出声明的 {@code exclude} 类别主动排除，非转换失败。 */
+    FILTERED
 }

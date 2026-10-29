@@ -49,4 +49,22 @@ final class OutputPublisherTest {
             assertEquals("previous\n", Files.readString(output.resolve("hosts")));
         }
     }
+
+    @Test
+    void replacesWholeOutputDirectoryAndDropsStaleFiles() throws IOException {
+        Path output = Files.createDirectory(directory.resolve("output"));
+        Files.writeString(output.resolve("stale"), "old\n");
+        try (var workspace = new StagingWorkspace().open(output)) {
+            Files.writeString(workspace.nextDir().resolve("hosts"), "next\n");
+            PublishManifest manifest = PublishManifest.create(workspace,
+                    List.of(TestConfigs.textOutput("hosts", RuleType.HOSTS, RuleDialect.NONE)));
+
+            new OutputPublisher().publish(workspace, manifest);
+
+            assertEquals("next\n", Files.readString(output.resolve("hosts")));
+            assertFalse(Files.exists(output.resolve("stale")));
+            assertFalse(Files.exists(workspace.previousDir()));
+            assertFalse(Files.exists(workspace.nextDir()));
+        }
+    }
 }

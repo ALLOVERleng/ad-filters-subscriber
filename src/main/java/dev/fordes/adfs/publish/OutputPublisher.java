@@ -3,8 +3,6 @@ package dev.fordes.adfs.publish;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 
 import jakarta.inject.Singleton;
 
@@ -14,52 +12,32 @@ import dev.fordes.adfs.publish.StagingWorkspace.Workspace;
 @Singleton
 public final class OutputPublisher {
 
+    /**
+     * 以“整目录交换”的方式发布本轮产物。
+     *
+     * <p>逐文件移动无法保证一批文件的版本一致：中途失败会留下新旧混杂的输出目录，且配置中删除的
+     * 输出文件会永久残留。这里改为三步目录级操作：旧目录整体改名为恢复目录、新目录整体进位、
+     * 删除恢复目录。任意一步失败都不会产生混合版本；若在两次改名之间中断，下一次运行的
+     * {@link StagingWorkspace} 恢复逻辑会把旧目录还原。</p>
+     *
+     * <p>逐文件校验（路径越界、符号链接、文件集合、大小与 SHA-256）已由
+     * {@link PublishManifest#validate} 完成，此处不再重复。</p>
+     */
     public void publish(Workspace workspace, PublishManifest manifest) {
         manifest.validate(workspace);
         try {
             StagingWorkspace.verifyStableParent(
                     workspace.parent(), workspace.outputDir(), workspace.previousDir());
-            for (PublishManifest.Entry entry : manifest.entries()) {
-                validateTarget(workspace.outputDir(), entry.path());
+            if (Files.exists(workspace.outputDir(), LinkOption.NOFOLLOW_LINKS)) {
+                StagingWorkspace.moveAtomic(workspace.outputDir(), workspace.previousDir());
             }
-            Files.createDirectories(workspace.outputDir());
-            for (PublishManifest.Entry entry : manifest.entries()) {
-                Path target = workspace.outputDir().resolve(entry.path());
-                try {
-                    validateTarget(workspace.outputDir(), entry.path());
-                    Files.createDirectories(target.getParent());
-                    Files.move(workspace.nextDir().resolve(entry.path()), target,
-                            StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-                } catch (IOException exception) {
-                    throw new OutputException("原子替换输出文件失败, 已发布文件保留新版本: " + target,
-                            exception);
-                }
-            }
+            StagingWorkspace.moveAtomic(workspace.nextDir(), workspace.outputDir());
+            TreeDeleter.delete(workspace.previousDir());
         } catch (OutputException exception) {
             throw exception;
         } catch (IOException exception) {
-            throw new OutputException("准备输出文件发布失败: " + workspace.outputDir(), exception);
-        }
-    }
-
-    private static void validateTarget(Path outputDir, Path relative) throws IOException {
-        Path target = outputDir.resolve(relative).normalize();
-        if (relative.isAbsolute() || target.equals(outputDir) || !target.startsWith(outputDir)) {
-            throw new OutputException("输出文件路径越界: " + relative);
-        }
-        for (Path current = target; current.startsWith(outputDir); current = current.getParent()) {
-            if (!Files.exists(current, LinkOption.NOFOLLOW_LINKS)) {
-                continue;
-            }
-            if (Files.isSymbolicLink(current) || !current.toRealPath().equals(current)) {
-                throw new OutputException("输出路径不得经过符号链接或目录联接: " + current);
-            }
-            boolean valid = current.equals(target)
-                    ? Files.isRegularFile(current, LinkOption.NOFOLLOW_LINKS)
-                    : Files.isDirectory(current, LinkOption.NOFOLLOW_LINKS);
-            if (!valid) {
-                throw new OutputException("输出路径存在文件与目录冲突: " + current);
-            }
+            throw new OutputException(
+                    "原子替换输出目录失败, 下次运行会自动恢复: " + workspace.outputDir(), exception);
         }
     }
 }

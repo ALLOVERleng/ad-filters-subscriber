@@ -4,11 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -94,6 +96,30 @@ final class ConfigValidatorTest {
         assertThrows(ConfigurationException.class, dns::validate);
     }
 
+    @Test
+    void resolvesExcludeCategoriesAndRejectsUnknownOnes() throws Exception {
+        Path input = temporaryDirectory.resolve("rules.txt");
+        Files.writeString(input, "0.0.0.0 ads.example\n");
+        RuleProperties rules = new RuleProperties();
+        PreprocessorProperties preprocessor = new PreprocessorProperties();
+
+        EffectiveConfig config = validator(
+                temporaryDirectory.resolve("output"), input, "hosts", null,
+                "easylist.txt", "adblock", "adguard", null, rules, preprocessor, List.of("dns-domain")).validate();
+        assertEquals(Set.of(RuleCategory.DNS_DOMAIN), config.outputs().getFirst().exclude());
+
+        EffectiveConfig plain = validator(
+                temporaryDirectory.resolve("output"), input, "hosts", null,
+                "easylist.txt", "adblock", "adguard", null, rules, preprocessor).validate();
+        assertTrue(plain.outputs().getFirst().exclude().isEmpty());
+
+        ConfigValidator unknown = validator(
+                temporaryDirectory.resolve("output"), input, "hosts", null,
+                "easylist.txt", "adblock", "adguard", null, rules, preprocessor,
+                List.of("dns-domain", "not-a-category"));
+        assertThrows(ConfigurationException.class, unknown::validate);
+    }
+
     private static ConfigValidator validator(
             Path outputDir,
             Path inputPath,
@@ -105,6 +131,22 @@ final class ConfigValidatorTest {
             String dnsServer,
             RuleProperties rules,
             PreprocessorProperties preprocessor) {
+        return validator(outputDir, inputPath, inputType, inputDialect, outputName, outputType, outputDialect,
+                dnsServer, rules, preprocessor, List.of());
+    }
+
+    private static ConfigValidator validator(
+            Path outputDir,
+            Path inputPath,
+            String inputType,
+            String inputDialect,
+            String outputName,
+            String outputType,
+            String outputDialect,
+            String dnsServer,
+            RuleProperties rules,
+            PreprocessorProperties preprocessor,
+            List<String> exclude) {
         AdfsProperties adfs = new AdfsProperties();
         adfs.setOutputDir(outputDir);
         InputProperties input = new InputProperties(0);
@@ -116,6 +158,7 @@ final class ConfigValidatorTest {
         output.setName(outputName);
         output.setType(outputType);
         output.setDialect(outputDialect);
+        output.setExclude(exclude);
         DnsProperties dns = new DnsProperties();
         dns.setServers(dnsServer == null ? List.of() : List.of(dnsServer));
         return new ConfigValidator(

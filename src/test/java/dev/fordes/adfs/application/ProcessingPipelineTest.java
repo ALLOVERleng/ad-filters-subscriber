@@ -24,6 +24,7 @@ import dev.fordes.adfs.config.EffectiveConfig;
 import dev.fordes.adfs.config.InputSpec.LocalSource;
 import dev.fordes.adfs.config.InputSpec;
 import dev.fordes.adfs.config.OutputSpec;
+import dev.fordes.adfs.config.RuleCategory;
 import dev.fordes.adfs.config.RuleDialect;
 import dev.fordes.adfs.config.RuleType;
 import dev.fordes.adfs.format.FormatRegistry;
@@ -114,6 +115,39 @@ final class ProcessingPipelineTest {
         assertTrue(singBox.contains("blocked.example"));
     }
 
+    @Test
+    void excludesDeclaredRuleCategoryFromSelectedOutputs() throws IOException {
+        Path dns = temporaryDirectory.resolve("exclude.dns");
+        Files.writeString(dns, "exact.example\n||suffix.example^\n@@|safe.example|\n", StandardCharsets.UTF_8);
+        Path adblock = temporaryDirectory.resolve("exclude.txt");
+        Files.writeString(adblock, "||tracker.example^\n", StandardCharsets.UTF_8);
+        Path outputDir = temporaryDirectory.resolve("exclude-output");
+        EffectiveConfig base = TestConfigs.create(dns, RuleType.DNS, RuleDialect.ADGUARD, outputDir,
+                List.of(TestConfigs.textOutput("browser.txt", RuleType.ADBLOCK, RuleDialect.ADGUARD,
+                                Set.of(RuleCategory.DNS_DOMAIN)),
+                        TestConfigs.textOutput("all.txt", RuleType.ADBLOCK, RuleDialect.ADGUARD)), false);
+        EffectiveConfig config = new EffectiveConfig(base.outputDir(), base.inputLimits(), base.http(), base.rules(),
+                new ConversionConfig(true, true), base.dns(), List.of(
+                        new InputSpec("dns", new LocalSource(dns), RuleType.DNS, RuleDialect.ADGUARD),
+                        new InputSpec("adblock", new LocalSource(adblock), RuleType.ADBLOCK, RuleDialect.ADGUARD)),
+                base.outputs());
+
+        ProcessingResult result = pipeline().process(config);
+
+        String browser = Files.readString(outputDir.resolve("browser.txt"));
+        assertTrue(browser.contains("||tracker.example^"));
+        assertTrue(browser.contains("@@||safe.example^"));
+        assertFalse(browser.contains("exact.example"));
+        assertFalse(browser.contains("suffix.example"));
+        String all = Files.readString(outputDir.resolve("all.txt"));
+        assertTrue(all.contains("||tracker.example^"));
+        assertTrue(all.contains("@@||safe.example^"));
+        assertTrue(all.contains("||exact.example^"));
+        assertTrue(all.contains("||suffix.example^"));
+        assertEquals(2, result.outputs().get(Path.of("browser.txt")).filtered());
+        assertEquals(0, result.outputs().get(Path.of("all.txt")).filtered());
+    }
+
     private static ProcessingPipeline pipeline() {
         return new ProcessingPipeline(
                 new FormatRegistry(),
@@ -124,17 +158,89 @@ final class ProcessingPipelineTest {
     }
 
     @Test
-    void preservesExactDnsRulesWithoutAllowingExpansion() throws IOException {
+    void rendersExactDnsRulesAsSubdomainBlocksWhenExpansionAllowed() throws IOException {
         Path input = temporaryDirectory.resolve("dns.txt");
         Files.writeString(input, "ads.example\n@@|safe.example|\n||suffix.example^\n");
         Path outputDir = temporaryDirectory.resolve("dns-output");
+        EffectiveConfig base = TestConfigs.create(input, RuleType.DNS, RuleDialect.ADGUARD, outputDir,
+                List.of(TestConfigs.textOutput("dns.txt", RuleType.DNS, RuleDialect.ADGUARD)), false);
+        EffectiveConfig config = new EffectiveConfig(base.outputDir(), base.inputLimits(), base.http(),
+                base.rules(), new ConversionConfig(true, true), base.dns(), base.inputs(), base.outputs());
+
+        pipeline().process(config);
+
+        assertEquals("||ads.example^\n@@||safe.example^\n||suffix.example^\n",
+                Files.readString(outputDir.resolve("dns.txt")));
+    }
+
+    @Test
+    void dropsExactDnsRulesWhenExpansionDisallowed() throws IOException {
+        Path input = temporaryDirectory.resolve("dns-3.txt");
+        Files.writeString(input, "ads.example\n@@|safe.example|\n||suffix.example^\n");
+        Path outputDir = temporaryDirectory.resolve("dns-output-3");
         EffectiveConfig config = TestConfigs.create(input, RuleType.DNS, RuleDialect.ADGUARD, outputDir,
                 List.of(TestConfigs.textOutput("dns.txt", RuleType.DNS, RuleDialect.ADGUARD)), false);
 
         pipeline().process(config);
 
-        assertEquals("|ads.example|\n@@|safe.example|\n||suffix.example^\n",
-                Files.readString(outputDir.resolve("dns.txt")));
+        assertEquals("||suffix.example^\n", Files.readString(outputDir.resolve("dns.txt")));
+    }
+
+    @Test
+    void collapsesIdenticalRenderedOrderedRules() throws IOException {
+        Path input = temporaryDirectory.resolve("dup.conf");
+        Files.writeString(input, "address=/dup.example/#\naddress=/dup.example/#\n");
+        Path outputDir = temporaryDirectory.resolve("dup-output");
+        EffectiveConfig config = TestConfigs.create(input, RuleType.DNSMASQ, RuleDialect.NONE, outputDir,
+                List.of(TestConfigs.textOutput("dnsmasq.txt", RuleType.DNSMASQ, RuleDialect.NONE)), false);
+
+        pipeline().process(config);
+
+        assertEquals("address=/dup.example/#\n", Files.readString(outputDir.resolve("dnsmasq.txt")));
+    }
+
+    @Test
+    void dropsRulesLongerThanRenderedLineLimit() throws IOException {
+        Path input = temporaryDirectory.resolve("long.txt");
+        Files.writeString(input, "a.example##." + "x".repeat(40_000) + "\n||short.example^\n");
+        Path outputDir = temporaryDirectory.resolve("long-output");
+        EffectiveConfig config = TestConfigs.create(input, RuleType.ADBLOCK, RuleDialect.ADGUARD, outputDir,
+                List.of(TestConfigs.textOutput("easylist.txt", RuleType.ADBLOCK, RuleDialect.ADGUARD)), false);
+
+        pipeline().process(config);
+
+        assertEquals("||short.example^\n", Files.readString(outputDir.resolve("easylist.txt")));
+    }
+
+    @Test
+    void removesBlocksCoveredByWhitelistedParentDomain() throws IOException {
+        Path input = temporaryDirectory.resolve("whitelist.hosts");
+        Files.writeString(input, "0.0.0.0 sub.allow.example\n0.0.0.0 other.example\n");
+        Path outputDir = temporaryDirectory.resolve("whitelist-output");
+        EffectiveConfig base = TestConfigs.create(input, RuleType.HOSTS, RuleDialect.NONE, outputDir,
+                List.of(TestConfigs.textOutput("hosts.txt", RuleType.HOSTS, RuleDialect.NONE)), false);
+        EffectiveConfig config = new EffectiveConfig(base.outputDir(), base.inputLimits(), base.http(),
+                new RuleConfig(1, 65_536, Set.of("allow.example"), base.rules().preprocessor()),
+                base.conversion(), base.dns(), base.inputs(), base.outputs());
+
+        pipeline().process(config);
+
+        assertEquals("0.0.0.0 other.example\n", Files.readString(outputDir.resolve("hosts.txt")));
+    }
+
+    @Test
+    void dropsSafariAffinityMetadataFromAdblockOutput() throws IOException {
+        Path input = temporaryDirectory.resolve("safari.txt");
+        Files.writeString(input, "!#safari_cb_affinity(general)\n||ads.example^\n!#safari_cb_affinity\n");
+        Path outputDir = temporaryDirectory.resolve("safari-output");
+        EffectiveConfig base = TestConfigs.create(input, RuleType.ADBLOCK, RuleDialect.ADGUARD, outputDir,
+                List.of(TestConfigs.textOutput("easylist.txt", RuleType.ADBLOCK, RuleDialect.ADGUARD)), false);
+        EffectiveConfig config = new EffectiveConfig(base.outputDir(), base.inputLimits(), base.http(),
+                base.rules(), new ConversionConfig(true, true), base.dns(), base.inputs(), base.outputs());
+
+        pipeline().process(config);
+
+        assertEquals("||ads.example^\n", Files.readString(outputDir.resolve("easylist.txt")));
     }
 
     @Test

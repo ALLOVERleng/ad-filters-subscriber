@@ -8,6 +8,8 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Validated
@@ -25,6 +27,9 @@ public final class OutputProperties {
     private String dialect;
     private String container;
     private String fileHeader;
+
+    /** 需要从该输出中排除的规则类别，例如 {@code [dns-domain]}。缺省为空表示全部保留。 */
+    private List<String> exclude = List.of();
 
     public OutputProperties(@Parameter int index) {
         this.index = index;

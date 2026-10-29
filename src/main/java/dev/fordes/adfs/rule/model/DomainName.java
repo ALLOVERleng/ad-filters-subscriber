@@ -51,8 +51,11 @@ public record DomainName(String value) implements Comparable<DomainName> {
         if (label.isEmpty() || label.length() > MAX_LABEL_LENGTH) {
             throw new RuleProcessingException("域名标签长度非法: " + domain + " --> " + label);
         }
-        boolean valid = label.chars().allMatch(character -> character >= 'a' && character <= 'z'
-                || character >= '0' && character <= '9' || character == '-' || character == '_');
+        // LDH 规则: 只允许字母、数字与连字符, 且连字符不得出现在标签首尾。
+        // 下划线只存在于 _domainkey/_dmarc 等 TXT 记录场景, 不能作为可解析主机名发布。
+        boolean boundary = label.charAt(0) == '-' || label.charAt(label.length() - 1) == '-';
+        boolean valid = !boundary && label.chars().allMatch(character -> character >= 'a' && character <= 'z'
+                || character >= '0' && character <= '9' || character == '-');
         if (!valid) {
             throw new RuleProcessingException("域名标签包含非法字符: " + domain + " --> " + label);
         }

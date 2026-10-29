@@ -40,7 +40,6 @@ public final class AdblockWriter implements RuleWriter {
     private final AdblockDialectDefinition dialect;
     private final OutputRuleProcessor<String> processor;
     private boolean finished;
-    private boolean hasSafariAffinity;
 
 
     public AdblockWriter(
@@ -77,13 +76,8 @@ public final class AdblockWriter implements RuleWriter {
         }
         Encoding value = encoded.orElseThrow();
         byte[] bytes = value.text().getBytes(StandardCharsets.UTF_8);
-        WriteResult result = processor.process(new ProjectedRule<>(value.text(), bytes, value.effectiveRule(),
+        return processor.process(new ProjectedRule<>(value.text(), bytes, value.effectiveRule(),
                 value.decision(), value.passthrough(), DedupMode.SET_LIKE));
-        if ((result == WriteResult.WRITTEN || result == WriteResult.PASSTHROUGH)
-                && entry instanceof SafariRule && target.dialect() == RuleDialect.ADGUARD) {
-            hasSafariAffinity = true;
-        }
-        return result;
     }
 
     private Optional<Encoding> encode(RuleEntry entry) {
@@ -103,16 +97,13 @@ public final class AdblockWriter implements RuleWriter {
     }
 
     private Optional<Encoding> encodeSafari(SafariRule safari) {
-        return encode(safari.rule()).map(encoded -> {
-            if (target.dialect() == RuleDialect.ADGUARD) {
-                return new Encoding("!#safari_cb_affinity(" + safari.affinity() + ")" + LF + encoded.text()
-                        + LF + "!#safari_cb_affinity", encoded.passthrough(), safari, encoded.decision());
-            }
-            return new Encoding(encoded.text(), encoded.passthrough(), encoded.effectiveRule(),
-                    encoded.decision().with(ConversionScope.EXPANDED,
-                            ConversionLoss.DROPPED_PLATFORM_CONSTRAINT,
-                            "目标方言不能保留 Safari 内容拦截器范围"));
-        });
+        // `!#safari_cb_affinity` 只有 AdGuard for Safari 使用: 非 Safari 客户端会把它当注释忽略,
+        // 却让每条规则多出两行元数据(实测 easylist 约 1,854 行纯噪音), 并使 Total Size 与行数脱节。
+        // 这里统一展开为无条件规则, 与 SingBox/SmartDns/Basic Writer 的处理保持一致。
+        return encode(safari.rule()).map(encoded -> new Encoding(encoded.text(), encoded.passthrough(),
+                encoded.effectiveRule(), encoded.decision().with(ConversionScope.EXPANDED,
+                        ConversionLoss.DROPPED_PLATFORM_CONSTRAINT,
+                        "目标方言不能保留 Safari 内容拦截器范围")));
     }
 
     private Optional<Encoding> encodeDomain(DomainPattern pattern, RuleAction action) {
@@ -209,9 +200,6 @@ public final class AdblockWriter implements RuleWriter {
         }
         for (DomainName domain : whitelist) {
             String exception = "@@||" + domain.value() + "^";
-            if (hasSafariAffinity) {
-                exception = "!#safari_cb_affinity(all)" + LF + exception + LF + "!#safari_cb_affinity";
-            }
             byte[] bytes = exception.getBytes(StandardCharsets.UTF_8);
             if (deduplicator.add(bytes)) {
                 writeBytes(exception + LF);

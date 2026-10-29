@@ -166,7 +166,18 @@ public final class ConfigValidator {
             fileHeader = "";
         }
         FileHeaderTemplate.validate(fileHeader, field);
-        return new OutputSpec(relative, type, dialect, container, fileHeader.isBlank() ? "" : fileHeader);
+        Set<RuleCategory> exclude = new HashSet<>();
+        List<String> configuredExclude = properties.getExclude() == null ? List.of() : properties.getExclude();
+        for (String raw : configuredExclude) {
+            if (raw == null || raw.isBlank()) {
+                continue;
+            }
+            RuleCategory category = RuleCategory.find(raw).orElseThrow(() -> new ConfigurationException(
+                    "adfs.output[" + properties.getIndex() + "].exclude 含未知类别: " + raw));
+            exclude.add(category);
+        }
+        return new OutputSpec(relative, type, dialect, container, fileHeader.isBlank() ? "" : fileHeader,
+                Set.copyOf(exclude));
     }
 
     private static RuleDialect resolveDialect(RuleType type, String configured) {

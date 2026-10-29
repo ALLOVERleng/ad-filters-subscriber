@@ -22,9 +22,12 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
+# Gradle wrapper 必须随仓库分发，不能被 *.jar 忽略
+!gradle/wrapper/gradle-wrapper.jar
+
 .idea
 target
 .gradle
 build/
-/rule/
+/dist/
 logs/

@@ -35,10 +35,10 @@ public final class RunReporter {
         result.outputs().forEach((path, metrics) -> {
             long emittedRules = Math.addExact(metrics.written(), metrics.passthrough());
             long totalRules = Math.addExact(emittedRules, metrics.whitelistAdded());
-            log.info("输出「{}」: 生成 {} 条规则, 覆盖率 {}; 转换 {} 条, 透传 {} 条, 未支持 {} 条",
+            log.info("输出「{}」: 生成 {} 条规则, 覆盖率 {}; 转换 {} 条, 透传 {} 条, 排除 {} 条, 未支持 {} 条",
                     path, formatCount(totalRules), percentage(emittedRules, result.uniqueRules()),
                     formatCount(metrics.written()), formatCount(metrics.passthrough()),
-                    formatCount(metrics.unsupported()));
+                    formatCount(metrics.filtered()), formatCount(metrics.unsupported()));
         });
 
         Map<ProcessingStage, Long> stages = result.stages();

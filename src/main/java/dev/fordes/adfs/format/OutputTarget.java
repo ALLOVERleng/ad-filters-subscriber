@@ -28,6 +28,9 @@ public final class OutputTarget implements AutoCloseable {
     }
 
     public WriteResult write(RuleEntry entry) {
+        if (RuleFilter.isExcluded(spec, entry)) {
+            return WriteResult.FILTERED;
+        }
         return writer.write(entry);
     }
 

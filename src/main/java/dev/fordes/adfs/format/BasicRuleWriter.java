@@ -204,8 +204,15 @@ public final class BasicRuleWriter implements RuleWriter {
         if (!(pattern instanceof ExactDomain || pattern instanceof SuffixDomain)) {
             return new Unsupported("DNS 基础 Writer 尚不能表达复杂域名模式");
         }
-        String text = pattern instanceof ExactDomain ? "|" + pattern.value() + "|" : "||" + pattern.value() + "^";
-        return new Encoded(prefix + text,
+        // `|domain|` 表示 URL 与域名完全相等, 对真实请求永远不会命中; 精确主机在 Adblock/DNS
+        // 语法中没有等价写法, 只能扩展为“域名及其子域”, 并显式记录语义扩大。
+        if (pattern instanceof ExactDomain) {
+            return new Encoded(prefix + "||" + pattern.value() + "^",
+                    new ConversionDecision(ConversionScope.EXPANDED, Set.of(ConversionLoss.ROOT_EXPANDED_TO_SUBDOMAINS),
+                            "DNS 语法无法表达仅精确主机, 扩展为域名及其子域"),
+                    false, new DomainRule(new SuffixDomain(new DomainName(pattern.value())), action));
+        }
+        return new Encoded(prefix + "||" + pattern.value() + "^",
                 new ConversionDecision(ConversionScope.EXACT, "DNS 域名边界精确转换"), false, new DomainRule(pattern, action));
     }
 

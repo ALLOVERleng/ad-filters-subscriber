@@ -77,7 +77,7 @@ adfs:
       type: adblock
 
     - name: 'xndeye private adblock list'
-      path: 'rule/private.txt'
+      path: 'rules-src/private.txt'
       type: adblock
       dialect: adguard
 
@@ -159,17 +159,22 @@ adfs:
       type: adblock
 
   output:
+    # 浏览器列表只保留浏览器语义的规则: hosts/dns/mihomo/sing-box 类输入产生的纯域名阻断
+    # 在这里既无法覆盖子域、也把文件撑到超出 jsDelivr 的 20MB 上限, 因此统一排除。
     - name: easylist.txt
       type: adblock
       dialect: adguard
+      exclude: [dns-domain]
 
     - name: ubo.txt
       type: adblock
       dialect: ubo
+      exclude: [dns-domain]
 
     - name: abp.txt
       type: adblock
       dialect: abp
+      exclude: [dns-domain]
 
     - name: dns.txt
       type: dns
@@ -214,7 +219,9 @@ adfs:
         - "store-drcn.hispace.dbankcloud.com"
 
     conversion:
-      allow-expansion: false
+      # 精确主机(dns 语法的 |domain|)没有等价写法, 只能扩展为“域名+子域”;
+      # 打开 expansion 以保留这些域名, 否则它们会因语义扩大而被丢弃。
+      allow-expansion: true
       allow-reduction: true
 
     dns:

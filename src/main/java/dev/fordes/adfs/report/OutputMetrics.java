@@ -6,6 +6,7 @@ public record OutputMetrics(
         long duplicates,
         long whitelistRemoved,
         long unsupported,
+        long filtered,
         long whitelistAdded,
         long bytes) {
 }

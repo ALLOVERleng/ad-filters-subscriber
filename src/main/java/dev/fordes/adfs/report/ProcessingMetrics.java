@@ -135,6 +135,7 @@ final class MutableOutputMetrics {
     private long duplicates;
     private long whitelistRemoved;
     private long unsupported;
+    private long filtered;
     private long whitelistAdded;
     private long bytes;
 
@@ -154,10 +155,12 @@ final class MutableOutputMetrics {
             case DUPLICATE -> duplicates++;
             case WHITELIST_REMOVED -> whitelistRemoved++;
             case UNSUPPORTED -> unsupported++;
+            case FILTERED -> filtered++;
         }
     }
 
     OutputMetrics snapshot() {
-        return new OutputMetrics(written, passthrough, duplicates, whitelistRemoved, unsupported, whitelistAdded, bytes);
+        return new OutputMetrics(written, passthrough, duplicates, whitelistRemoved, unsupported, filtered,
+                whitelistAdded, bytes);
     }
 }

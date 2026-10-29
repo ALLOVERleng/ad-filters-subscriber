@@ -14,7 +14,7 @@ final class RuleValueTest {
     @Test
     void normalizesInternationalDomainNamesAndRootDot() {
         assertEquals("xn--bcher-kva.example", new DomainName(" BÜCHER.Example. ").value());
-        assertEquals("service_name.example", new DomainName("SERVICE_NAME.EXAMPLE").value());
+        assertEquals("my-host.example", new DomainName("MY-HOST.EXAMPLE").value());
     }
 
     @Test
@@ -23,6 +23,9 @@ final class RuleValueTest {
         assertThrows(RuleProcessingException.class, () -> new DomainName("example..com"));
         assertThrows(RuleProcessingException.class, () -> new DomainName("bad label.example"));
         assertThrows(RuleProcessingException.class, () -> new DomainName("a".repeat(64) + ".example"));
+        assertThrows(RuleProcessingException.class, () -> new DomainName("service_name.example"));
+        assertThrows(RuleProcessingException.class, () -> new DomainName("-120x600.example"));
+        assertThrows(RuleProcessingException.class, () -> new DomainName("trailing-.example"));
         assertTrue(DomainName.tryParse("valid.example").isPresent());
         assertTrue(DomainName.tryParse("invalid..example").isEmpty());
     }

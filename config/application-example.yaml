@@ -22,6 +22,9 @@ adfs:
       type: adblock
       dialect: ubo
       # file-header: "自定义标题：{{name}}"
+      # exclude 可排除整类规则，目前支持 dns-domain（hosts/dns/mihomo/sing-box 类输入产生的
+      # 纯域名阻断）。浏览器列表建议排除：这类规则在浏览器里覆盖不到子域，且会把产物体积推高。
+      # exclude: [dns-domain]
 
     - name: dns.txt
       type: dns
@@ -49,8 +52,9 @@ adfs:
   # 以下运行选项均可省略，所示数值为默认值。
   config:
     # 输出目录；仅替换本次声明的输出文件，保留其他文件。父目录必须存在且可写。
-    # 当前路径校验仍要求输出目录不得包含本地输入文件。
-    output-dir: rule
+    # 生成物与本地输入源应分目录存放（如 output-dir: dist、本地规则放 rules-src/），
+    # 否则本地输入文件可能被当作产物一起发布。
+    output-dir: dist
 
     # 默认自动生成文件头；设为 "" 可全局关闭，单文件仍可覆盖。
     # 支持 {{name}}（输出相对路径）、{{type}}、{{dialect}}（无方言时等同于 type）、

@@ -17,6 +17,7 @@ import dev.fordes.adfs.config.EffectiveConfig.RuleConfig;
 import dev.fordes.adfs.config.InputSpec;
 import dev.fordes.adfs.config.InputSpec.LocalSource;
 import dev.fordes.adfs.config.OutputSpec;
+import dev.fordes.adfs.config.RuleCategory;
 import dev.fordes.adfs.config.RuleDialect;
 import dev.fordes.adfs.config.RuleType;
 
@@ -51,5 +52,10 @@ public final class TestConfigs {
 
     public static OutputSpec textOutput(String name, RuleType type, RuleDialect dialect) {
         return new OutputSpec(Path.of(name), type, dialect, ContainerFormat.TEXT, "");
+    }
+
+    public static OutputSpec textOutput(String name, RuleType type, RuleDialect dialect,
+            Set<RuleCategory> exclude) {
+        return new OutputSpec(Path.of(name), type, dialect, ContainerFormat.TEXT, "", exclude);
     }
 }

@@ -128,10 +128,15 @@ public final class SmartDnsWriter implements RuleWriter {
             return FinishResult.EMPTY;
         }
         for (DomainName domain : whitelist) {
+            // 白名单放行同样走去重: 上游可能已经给出同一条 `address /x/-`, 重复写只会让产物出现
+            // 逐字相同的两行, 且会让 Total Size 虚高。
             String rule = "address /" + domain.value() + "/-";
-            deduplicator.recordOrdered();
-            writeBytes(rule + LF);
-            added++;
+            if (deduplicator.add(rule.getBytes(StandardCharsets.UTF_8))) {
+                writeBytes(rule + LF);
+                added++;
+            } else {
+                duplicates++;
+            }
         }
         try {
             output.flush();

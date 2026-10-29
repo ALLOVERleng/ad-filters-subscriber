@@ -70,10 +70,11 @@ final class ProcessingPipelineTest {
         Map<Path, byte[]> secondOutput = readOutput(outputDir);
 
         assertEquals(5, firstOutput.size());
-        assertEquals(firstOutput.size() + 1, secondOutput.size());
+        assertEquals(firstOutput.size(), secondOutput.size());
         assertTrue(secondOutput.keySet().containsAll(firstOutput.keySet()));
         firstOutput.forEach((path, bytes) -> assertArrayEquals(bytes, secondOutput.get(path), path.toString()));
-        assertEquals("stale", Files.readString(outputDir.resolve("stale.txt")));
+        // 发布采用整目录原子替换: 目录内未声明的旧文件不会保留。
+        assertFalse(Files.exists(outputDir.resolve("stale.txt")));
         assertTrue(Files.readString(outputDir.resolve("adguard.txt")).contains("||ads.example^"));
         assertTrue(Files.readString(outputDir.resolve("adguard.txt")).contains("||opaque.example^$redirect=noopjs"));
         assertFalse(Files.readString(outputDir.resolve("adguard.txt")).contains("disabled.example"));

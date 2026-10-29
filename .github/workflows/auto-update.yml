@@ -58,9 +58,9 @@ jobs:
 
       - name: Prepare release contents
         run: |
-          find . -maxdepth 1 ! -name 'rule' ! -name '.' ! -name '.git' -exec rm -rf -- {} +
-          mv rule/* .
-          rm -rf rule
+          find . -maxdepth 1 ! -name 'dist' ! -name '.' ! -name '.git' -exec rm -rf -- {} +
+          mv dist/* .
+          rm -rf dist
 
       - name: Commit release contents
         uses: stefanzweifel/git-auto-commit-action@v7

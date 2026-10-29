@@ -12,7 +12,7 @@ import java.nio.file.Path;
 @ConfigurationProperties("adfs.config")
 public final class AdfsProperties {
 
-    private Path outputDir = Path.of("rule");
+    private Path outputDir = Path.of("dist");
     private String fileHeader = FileHeaderTemplate.DEFAULT;
 
     public void setFileHeader(@Nullable String fileHeader) {

@@ -38,6 +38,9 @@ public final class AdblockDialectConverter {
     }
 
     public static Optional<Projection> convert(CosmeticRule rule, RuleDialect target) {
+        if (!supportedByTarget(rule.operator().value(), rule.body(), target)) {
+            return Optional.empty();
+        }
         String encoded = encode(rule.domains(), rule.operator().value(), rule.body());
         if (rule.dialect() == target) {
             return Optional.of(new Projection(encoded, "同方言元素规则透传"));
@@ -70,10 +73,14 @@ public final class AdblockDialectConverter {
     }
 
     public static Optional<Projection> convert(OpaqueRule rule, RuleDialect target) {
+        AdblockSyntax.CosmeticLocation location = AdblockSyntax.cosmeticOperator(rule.payload());
+        if (location != null && !supportedByTarget(location.operator(),
+                rule.payload().substring(location.index() + location.operator().length()), target)) {
+            return Optional.empty();
+        }
         if (rule.dialect() == target) {
             return Optional.of(new Projection(rule.payload(), "同方言不透明规则透传"));
         }
-        AdblockSyntax.CosmeticLocation location = AdblockSyntax.cosmeticOperator(rule.payload());
         if (location != null) {
             return convertOpaqueCosmetic(rule.dialect(), target, rule.payload(), location);
         }
@@ -313,6 +320,28 @@ public final class AdblockDialectConverter {
     private static boolean adguardUboPair(RuleDialect source, RuleDialect target) {
         return source == RuleDialect.ADGUARD && target == RuleDialect.UBO
                 || source == RuleDialect.UBO && target == RuleDialect.ADGUARD;
+    }
+
+    /**
+     * 目标方言本身能否执行这条元素规则（与来源方言是否相同无关）。
+     *
+     * <p>“同方言透传”并不等于“语法合法”：上游经常把 uBO 的 {@code ##+js(...)}、{@code :style()}
+     * 混进声明为 adguard 的列表，AdGuard 会把它当作普通选择器而静默失效；反过来 uBO 也不实现
+     * AdGuard 的 {@code #$#} CSS 注入。这里只判定“该写法在目标方言中是否存在”，不做语义近似。</p>
+     */
+    private static boolean supportedByTarget(String operator, String body, RuleDialect target) {
+        return switch (operator) {
+            case "##", "#@#" -> target == RuleDialect.UBO
+                    || (!body.startsWith("+js(") && !body.contains(":style("));
+            case "#$#", "#@$#", "#$?#", "#@$?#" -> {
+                if (target == RuleDialect.UBO) {
+                    yield false;
+                }
+                // AdGuard CSS 注入必须是 `selector { declarations }`，否则该规则不会生效。
+                yield body.lastIndexOf('{') > 0 && body.endsWith("}");
+            }
+            default -> true;
+        };
     }
 
     private static Optional<Projection> convertRemoveAction(CosmeticRule rule, RuleDialect target) {

@@ -19,11 +19,15 @@ import dev.fordes.adfs.rule.model.DomainPattern;
 import dev.fordes.adfs.rule.model.DomainRule;
 import dev.fordes.adfs.rule.model.ExactDomain;
 import dev.fordes.adfs.rule.model.HostMappingRule;
+import dev.fordes.adfs.rule.model.IpCidrMatch;
 import dev.fordes.adfs.rule.model.IpCidrRule;
 import dev.fordes.adfs.rule.model.KeywordDomain;
 import dev.fordes.adfs.rule.model.MatchExpression;
+import dev.fordes.adfs.rule.model.NetworkMatch;
 import dev.fordes.adfs.rule.model.Not;
 import dev.fordes.adfs.rule.model.OpaqueRule;
+import dev.fordes.adfs.rule.model.PortMatch;
+import dev.fordes.adfs.rule.model.ProcessMatch;
 import dev.fordes.adfs.rule.model.RegexDomain;
 import dev.fordes.adfs.rule.model.RouteRule;
 import dev.fordes.adfs.rule.model.RuleAction;
@@ -170,11 +174,20 @@ public final class SourceExclusion {
     private boolean matchesExpression(MatchExpression expression) {
         return switch (expression) {
             case DomainMatch(DomainPattern pattern) -> matchesPattern(pattern);
-            case AllOf(List<MatchExpression> members), AnyOf(List<MatchExpression> members) ->
-                    members.stream().anyMatch(this::matchesExpression);
-            case Not(MatchExpression member) -> matchesExpression(member);
+            case AllOf(List<MatchExpression> expressions) -> matchesAny(expressions);
+            case AnyOf(List<MatchExpression> expressions) -> matchesAny(expressions);
+            case Not(MatchExpression operand) -> matchesExpression(operand);
             case IpCidrMatch _, NetworkMatch _, PortMatch _, ProcessMatch _ -> false;
         };
+    }
+
+    private boolean matchesAny(List<MatchExpression> expressions) {
+        for (MatchExpression expression : expressions) {
+            if (matchesExpression(expression)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

@@ -124,6 +124,10 @@ public final class BasicRuleWriter implements RuleWriter {
         if (!rule.modifiers().isEmpty()) {
             return new Unsupported("目标不能表达该 Adblock 动作修饰符");
         }
+        // 站点作用域必须在正则分支之前判断: 正则可以被投影成域名, 但 $domain 无法保真。
+        if (!AdblockDomainConversion.supportsRequestScope(rule)) {
+            return new Unsupported("目标不能表达 $domain 站点作用域");
+        }
         if (rule.pattern().kind() == AdblockPattern.Kind.REGEX) {
             return encodeAdblockRegex(rule);
         }

@@ -38,10 +38,19 @@ public record EffectiveConfig(
         }
     }
 
-    public record RuleConfig(int minLength, int maxLength, Set<String> whitelist, PreprocessorConfig preprocessor) {
+    public record RuleConfig(
+            int minLength,
+            int maxLength,
+            Set<String> whitelist,
+            PreprocessorConfig preprocessor,
+            boolean allowOverridesBlock) {
 
         public RuleConfig {
             whitelist = Set.copyOf(whitelist);
+        }
+
+        public RuleConfig(int minLength, int maxLength, Set<String> whitelist, PreprocessorConfig preprocessor) {
+            this(minLength, maxLength, whitelist, preprocessor, true);
         }
     }
 

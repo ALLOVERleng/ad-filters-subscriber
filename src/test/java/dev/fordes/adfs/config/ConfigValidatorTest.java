@@ -135,6 +135,37 @@ final class ConfigValidatorTest {
                 dnsServer, rules, preprocessor, List.of());
     }
 
+    @Test
+    void splitsAdblockOutputIntoElementAndUrlFiles() throws Exception {
+        Path input = temporaryDirectory.resolve("rules.txt");
+        Files.writeString(input, "0.0.0.0 ads.example\n");
+        RuleProperties rules = new RuleProperties();
+        PreprocessorProperties preprocessor = new PreprocessorProperties();
+
+        EffectiveConfig config = validator(
+                temporaryDirectory.resolve("output"), input, "hosts", null,
+                "browser.txt", "adblock", "adguard", null, rules, preprocessor, List.of(), true).validate();
+
+        assertEquals(2, config.outputs().size());
+        assertEquals(Path.of("browser.element.txt"), config.outputs().get(0).path());
+        assertEquals(RuleShape.ELEMENT, config.outputs().get(0).shape());
+        assertEquals(Path.of("browser.url.txt"), config.outputs().get(1).path());
+        assertEquals(RuleShape.URL, config.outputs().get(1).shape());
+    }
+
+    @Test
+    void rejectsSplitForNonAdblockOutput() throws Exception {
+        Path input = temporaryDirectory.resolve("rules.txt");
+        Files.writeString(input, "0.0.0.0 ads.example\n");
+
+        ConfigValidator split = validator(
+                temporaryDirectory.resolve("output"), input, "hosts", null,
+                "hosts.txt", "hosts", null, null, new RuleProperties(), new PreprocessorProperties(),
+                List.of(), true);
+
+        assertThrows(ConfigurationException.class, split::validate);
+    }
+
     private static ConfigValidator validator(
             Path outputDir,
             Path inputPath,
@@ -147,6 +178,23 @@ final class ConfigValidatorTest {
             RuleProperties rules,
             PreprocessorProperties preprocessor,
             List<String> exclude) {
+        return validator(outputDir, inputPath, inputType, inputDialect, outputName, outputType, outputDialect,
+                dnsServer, rules, preprocessor, exclude, false);
+    }
+
+    private static ConfigValidator validator(
+            Path outputDir,
+            Path inputPath,
+            String inputType,
+            String inputDialect,
+            String outputName,
+            String outputType,
+            String outputDialect,
+            String dnsServer,
+            RuleProperties rules,
+            PreprocessorProperties preprocessor,
+            List<String> exclude,
+            boolean split) {
         AdfsProperties adfs = new AdfsProperties();
         adfs.setOutputDir(outputDir);
         InputProperties input = new InputProperties(0);
@@ -159,6 +207,7 @@ final class ConfigValidatorTest {
         output.setType(outputType);
         output.setDialect(outputDialect);
         output.setExclude(exclude);
+        output.setSplit(split);
         DnsProperties dns = new DnsProperties();
         dns.setServers(dnsServer == null ? List.of() : List.of(dnsServer));
         return new ConfigValidator(

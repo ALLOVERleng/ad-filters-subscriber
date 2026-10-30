@@ -9,6 +9,7 @@ import dev.fordes.adfs.format.conversion.AdblockDomainConversion;
 import dev.fordes.adfs.format.conversion.DedupMode;
 import dev.fordes.adfs.format.conversion.ProjectedRule;
 import dev.fordes.adfs.format.conversion.RegexCompatibility;
+import dev.fordes.adfs.format.validate.OutputSyntax;
 import dev.fordes.adfs.rule.conversion.*;
 import dev.fordes.adfs.rule.dedup.OutputDeduplicator;
 import dev.fordes.adfs.rule.model.*;
@@ -48,7 +49,7 @@ public final class BasicRuleWriter implements RuleWriter {
         this.deduplicator = deduplicator;
         this.output = output;
         this.processor = new OutputRuleProcessor<>(policy, this::shouldRemoveForWhitelist,
-                deduplicator, this::writeProjected);
+                OutputSyntax.of(target), deduplicator, this::writeProjected);
     }
 
     @Override
@@ -368,8 +369,13 @@ public final class BasicRuleWriter implements RuleWriter {
         return "\"" + value.replace("\"", "\"\"") + "\"";
     }
 
+    /**
+     * 白名单在写出前做“减法”，对全部目标格式一致：被白名单覆盖的阻断规则直接丢弃。
+     * DNS 目标仍会在 finish 中补写 {@code @@||domain^}，用于与本列表之外的规则源共存时
+     * 显式放行；但本列表里不会再出现同一域名的阻断行，避免“阻断与放行并存”的歧义。
+     */
     private boolean shouldRemoveForWhitelist(RuleEntry entry) {
-        return target.type() != RuleType.DNS && WhitelistMatcher.matches(entry, whitelist);
+        return WhitelistMatcher.matches(entry, whitelist);
     }
 
     private String wrap(String text) {

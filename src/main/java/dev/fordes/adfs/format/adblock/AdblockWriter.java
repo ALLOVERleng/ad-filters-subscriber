@@ -2,6 +2,7 @@ package dev.fordes.adfs.format.adblock;
 
 import dev.fordes.adfs.config.OutputSpec;
 import dev.fordes.adfs.config.RuleDialect;
+import dev.fordes.adfs.config.RuleShape;
 import dev.fordes.adfs.config.RuleType;
 import dev.fordes.adfs.error.OutputException;
 import dev.fordes.adfs.format.FinishResult;
@@ -10,10 +11,12 @@ import dev.fordes.adfs.format.RuleWriter;
 import dev.fordes.adfs.format.WriteResult;
 import dev.fordes.adfs.format.conversion.DedupMode;
 import dev.fordes.adfs.format.conversion.ProjectedRule;
+import dev.fordes.adfs.format.validate.OutputSyntax;
 import dev.fordes.adfs.rule.conversion.ConversionDecision;
 import dev.fordes.adfs.rule.conversion.ConversionLoss;
 import dev.fordes.adfs.rule.conversion.ConversionPolicy;
 import dev.fordes.adfs.rule.conversion.ConversionScope;
+import dev.fordes.adfs.rule.conversion.WhitelistMatcher;
 import dev.fordes.adfs.rule.dedup.OutputDeduplicator;
 import dev.fordes.adfs.rule.model.*;
 import dev.fordes.adfs.rule.spool.RuleSpool;
@@ -55,7 +58,8 @@ public final class AdblockWriter implements RuleWriter {
         this.deduplicator = deduplicator;
         this.output = output;
         this.dialect = AdblockDialectDefinition.forDialect(target.dialect());
-        this.processor = new OutputRuleProcessor<>(policy, deduplicator, this::writeProjected);
+        this.processor = new OutputRuleProcessor<>(policy, this::shouldRemoveForWhitelist,
+                OutputSyntax.of(target), deduplicator, this::writeProjected);
     }
 
     @Override
@@ -104,6 +108,17 @@ public final class AdblockWriter implements RuleWriter {
                 encoded.effectiveRule(), encoded.decision().with(ConversionScope.EXPANDED,
                         ConversionLoss.DROPPED_PLATFORM_CONSTRAINT,
                         "目标方言不能保留 Safari 内容拦截器范围")));
+    }
+
+    /**
+     * 白名单在写出前做“减法”：被白名单覆盖的阻断规则直接丢弃，而不是先写阻断再补 {@code @@}。
+     *
+     * <p>只有减掉阻断规则，adblock / smartdns 与 hosts / dnsmasq / mihomo / sing-box
+     * 才会得到一致的结果（后者无法表达 allow，只能靠删除）。{@code @@} 仍然会在 finish 中
+     * 补写，用于与本列表之外的规则源共存时显式放行。</p>
+     */
+    private boolean shouldRemoveForWhitelist(RuleEntry entry) {
+        return WhitelistMatcher.matches(entry, whitelist);
     }
 
     private Optional<Encoding> encodeDomain(DomainPattern pattern, RuleAction action) {
@@ -198,14 +213,17 @@ public final class AdblockWriter implements RuleWriter {
         if (finished) {
             return FinishResult.EMPTY;
         }
-        for (DomainName domain : whitelist) {
-            String exception = "@@||" + domain.value() + "^";
-            byte[] bytes = exception.getBytes(StandardCharsets.UTF_8);
-            if (deduplicator.add(bytes)) {
-                writeBytes(exception + LF);
-                added++;
-            } else {
-                duplicates++;
+        // 白名单放行是 URL 规则: 元素规则文件里不应出现 @@||domain^。
+        if (target.shape() != RuleShape.ELEMENT) {
+            for (DomainName domain : whitelist) {
+                String exception = "@@||" + domain.value() + "^";
+                byte[] bytes = exception.getBytes(StandardCharsets.UTF_8);
+                if (deduplicator.add(bytes)) {
+                    writeBytes(exception + LF);
+                    added++;
+                } else {
+                    duplicates++;
+                }
             }
         }
         try {

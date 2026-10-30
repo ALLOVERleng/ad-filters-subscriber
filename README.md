@@ -18,9 +18,12 @@
 
 | 文件            | 说明                                    | github               | ghproxy                  | jsdelivr                  |
 |-----------------|:----------------------------------------|:--------------------:|:------------------------:|:-------------------------:|
-| `easylist.txt`   | AdGuard 广告过滤规则                     | [link][easylist-raw]  | [link][easylist-ghproxy]  | [link][easylist-jsdelivr]  |
-| `ubo.txt`        | uBlock Origin 广告过滤规则               | [link][ubo-raw]       | [link][ubo-ghproxy]       | [link][ubo-jsdelivr]       |
-| `abp.txt`        | Adblock Plus 广告过滤规则                | [link][abp-raw]       | [link][abp-ghproxy]       | [link][abp-jsdelivr]       |
+| `easylist.url.txt`     | AdGuard 广告过滤规则（URL/网络）      | [link][easylist-url-raw]     | [link][easylist-url-ghproxy]     | [link][easylist-url-jsdelivr]     |
+| `easylist.element.txt` | AdGuard 广告过滤规则（元素隐藏/样式）  | [link][easylist-element-raw] | [link][easylist-element-ghproxy] | [link][easylist-element-jsdelivr] |
+| `ubo.url.txt`          | uBlock Origin 广告过滤规则（URL/网络） | [link][ubo-url-raw]          | [link][ubo-url-ghproxy]          | [link][ubo-url-jsdelivr]          |
+| `ubo.element.txt`      | uBlock Origin 广告过滤规则（元素隐藏） | [link][ubo-element-raw]      | [link][ubo-element-ghproxy]      | [link][ubo-element-jsdelivr]      |
+| `abp.url.txt`          | Adblock Plus 广告过滤规则（URL/网络）  | [link][abp-url-raw]          | [link][abp-url-ghproxy]          | [link][abp-url-jsdelivr]          |
+| `abp.element.txt`      | Adblock Plus 广告过滤规则（元素隐藏）  | [link][abp-element-raw]      | [link][abp-element-ghproxy]      | [link][abp-element-jsdelivr]      |
 | `dns.txt`        | AdGuard DNS 过滤规则                     | [link][dns-raw]       | [link][dns-ghproxy]       | [link][dns-jsdelivr]       |
 | `hosts.txt`      | Hosts 格式规则                          | [link][hosts-raw]     | [link][hosts-ghproxy]     | [link][hosts-jsdelivr]     |
 | `dnsmasq.txt`    | dnsmasq 格式规则                         | [link][dnsmasq-raw]   | [link][dnsmasq-ghproxy]   | [link][dnsmasq-jsdelivr]   |
@@ -29,23 +32,41 @@
 | `sing-box.json`  | sing-box 规则集（JSON）                  | [link][sing-box-raw]  | [link][sing-box-ghproxy]  | [link][sing-box-jsdelivr]  |
 | `private.txt`    | 本仓库维护的私有规则，以 easylist 形式提供 | [link][private-raw]   | [link][private-ghproxy]   | [link][private-jsdelivr]   |
 
-[easylist-raw]: https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/easylist.txt
+[easylist-url-raw]: https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/easylist.url.txt
 
-[easylist-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/easylist.txt
+[easylist-url-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/easylist.url.txt
 
-[easylist-jsdelivr]: https://gcore.jsdelivr.net/gh/xndeye/adblock_list@refs/heads/release/easylist.txt
+[easylist-url-jsdelivr]: https://gcore.jsdelivr.net/gh/xndeye/adblock_list@refs/heads/release/easylist.url.txt
 
-[ubo-raw]: https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/ubo.txt
+[easylist-element-raw]: https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/easylist.element.txt
 
-[ubo-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/ubo.txt
+[easylist-element-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/easylist.element.txt
 
-[ubo-jsdelivr]: https://gcore.jsdelivr.net/gh/xndeye/adblock_list@refs/heads/release/ubo.txt
+[easylist-element-jsdelivr]: https://gcore.jsdelivr.net/gh/xndeye/adblock_list@refs/heads/release/easylist.element.txt
 
-[abp-raw]: https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/abp.txt
+[ubo-url-raw]: https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/ubo.url.txt
 
-[abp-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/abp.txt
+[ubo-url-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/ubo.url.txt
 
-[abp-jsdelivr]: https://gcore.jsdelivr.net/gh/xndeye/adblock_list@refs/heads/release/abp.txt
+[ubo-url-jsdelivr]: https://gcore.jsdelivr.net/gh/xndeye/adblock_list@refs/heads/release/ubo.url.txt
+
+[ubo-element-raw]: https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/ubo.element.txt
+
+[ubo-element-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/ubo.element.txt
+
+[ubo-element-jsdelivr]: https://gcore.jsdelivr.net/gh/xndeye/adblock_list@refs/heads/release/ubo.element.txt
+
+[abp-url-raw]: https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/abp.url.txt
+
+[abp-url-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/abp.url.txt
+
+[abp-url-jsdelivr]: https://gcore.jsdelivr.net/gh/xndeye/adblock_list@refs/heads/release/abp.url.txt
+
+[abp-element-raw]: https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/abp.element.txt
+
+[abp-element-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/abp.element.txt
+
+[abp-element-jsdelivr]: https://gcore.jsdelivr.net/gh/xndeye/adblock_list@refs/heads/release/abp.element.txt
 
 [dns-raw]: https://raw.githubusercontent.com/xndeye/adblock_list/refs/heads/release/dns.txt
 

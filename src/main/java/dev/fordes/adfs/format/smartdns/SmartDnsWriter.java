@@ -8,10 +8,12 @@ import dev.fordes.adfs.format.*;
 import dev.fordes.adfs.format.conversion.AdblockDomainConversion;
 import dev.fordes.adfs.format.conversion.DedupMode;
 import dev.fordes.adfs.format.conversion.ProjectedRule;
+import dev.fordes.adfs.format.validate.OutputSyntax;
 import dev.fordes.adfs.rule.conversion.ConversionDecision;
 import dev.fordes.adfs.rule.conversion.ConversionLoss;
 import dev.fordes.adfs.rule.conversion.ConversionPolicy;
 import dev.fordes.adfs.rule.conversion.ConversionScope;
+import dev.fordes.adfs.rule.conversion.WhitelistMatcher;
 import dev.fordes.adfs.rule.dedup.OutputDeduplicator;
 import dev.fordes.adfs.rule.model.*;
 import dev.fordes.adfs.rule.spool.RuleSpool;
@@ -49,7 +51,17 @@ public final class SmartDnsWriter implements RuleWriter {
         this.whitelist = whitelist.stream().map(DomainName::new).sorted().toList();
         this.deduplicator = deduplicator;
         this.output = output;
-        this.processor = new OutputRuleProcessor<>(policy, deduplicator, this::writeProjected);
+        this.processor = new OutputRuleProcessor<>(policy, this::shouldRemoveForWhitelist,
+                OutputSyntax.of(target), deduplicator, this::writeProjected);
+    }
+
+    /**
+     * 白名单覆盖的阻断规则在写出前丢弃；{@code address /domain/-} 仍会在 finish 中补写，
+     * 用于与本列表之外的规则源共存时显式放行。这样 SmartDNS 与 hosts / dnsmasq /
+     * mihomo / sing-box 的结果才一致，也不会出现“阻断行与放行行谁在后面”的顺序问题。
+     */
+    private boolean shouldRemoveForWhitelist(RuleEntry entry) {
+        return WhitelistMatcher.matches(entry, whitelist);
     }
 
     @Override

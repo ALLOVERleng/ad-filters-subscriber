@@ -21,9 +21,11 @@ public final class RunReporter {
         }
 
         long parsedRules = Math.addExact(result.semanticRules(), result.opaqueRules());
-        log.info("处理汇总: 读取 {} 个来源、{} 行, 解析 {} 条规则; 保留 {} 条唯一规则, 移除 {} 条重复规则, 跳过 {} 条非法规则",
+        log.info("处理汇总: 读取 {} 个来源、{} 行, 解析 {} 条规则; 保留 {} 条唯一规则, 移除 {} 条重复规则,"
+                        + " 剔除 {} 条被白名单覆盖的阻断规则, 跳过 {} 条非法规则",
                 formatCount(result.inputs()), formatCount(inputLines), formatCount(parsedRules),
-                formatCount(result.uniqueRules()), formatCount(result.duplicateRules()), formatCount(invalidRules));
+                formatCount(result.uniqueRules()), formatCount(result.duplicateRules()),
+                formatCount(result.allowOverridden()), formatCount(invalidRules));
 
         if (hasDnsMetrics(result.dns())) {
             DnsMetrics dns = result.dns();
@@ -35,10 +37,12 @@ public final class RunReporter {
         result.outputs().forEach((path, metrics) -> {
             long emittedRules = Math.addExact(metrics.written(), metrics.passthrough());
             long totalRules = Math.addExact(emittedRules, metrics.whitelistAdded());
-            log.info("输出「{}」: 生成 {} 条规则, 覆盖率 {}; 转换 {} 条, 透传 {} 条, 排除 {} 条, 未支持 {} 条",
+            log.info("输出「{}」: 生成 {} 条规则, 覆盖率 {}; 转换 {} 条, 透传 {} 条, 排除 {} 条,"
+                            + " 语法非法 {} 条, 未支持 {} 条",
                     path, formatCount(totalRules), percentage(emittedRules, result.uniqueRules()),
                     formatCount(metrics.written()), formatCount(metrics.passthrough()),
-                    formatCount(metrics.filtered()), formatCount(metrics.unsupported()));
+                    formatCount(metrics.filtered()), formatCount(metrics.invalidSyntax()),
+                    formatCount(metrics.unsupported()));
         });
 
         Map<ProcessingStage, Long> stages = result.stages();

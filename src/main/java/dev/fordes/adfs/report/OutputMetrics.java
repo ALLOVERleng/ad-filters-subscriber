@@ -7,6 +7,7 @@ public record OutputMetrics(
         long whitelistRemoved,
         long unsupported,
         long filtered,
+        long invalidSyntax,
         long whitelistAdded,
         long bytes) {
 }

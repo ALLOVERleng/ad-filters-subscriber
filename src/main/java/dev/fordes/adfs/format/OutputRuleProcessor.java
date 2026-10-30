@@ -11,7 +11,7 @@ import dev.fordes.adfs.rule.dedup.OutputDeduplicator;
 import dev.fordes.adfs.rule.model.ReservedHosts;
 import dev.fordes.adfs.rule.model.RuleEntry;
 
-/** 统一执行转换策略、白名单、目标去重和写出顺序。 */
+/** 统一执行转换策略、白名单、语法校验、目标去重和写出顺序。 */
 public final class OutputRuleProcessor<T> {
 
     /**
@@ -25,6 +25,7 @@ public final class OutputRuleProcessor<T> {
 
     private final ConversionPolicy policy;
     private final Predicate<RuleEntry> removeForWhitelist;
+    private final SyntaxValidator syntax;
     private final OutputDeduplicator deduplicator;
     private final Consumer<T> sink;
 
@@ -32,7 +33,7 @@ public final class OutputRuleProcessor<T> {
             ConversionPolicy policy,
             OutputDeduplicator deduplicator,
             Consumer<T> sink) {
-        this(policy, _ -> false, deduplicator, sink);
+        this(policy, _ -> false, SyntaxValidator.acceptAll(), deduplicator, sink);
     }
 
     public OutputRuleProcessor(
@@ -40,8 +41,18 @@ public final class OutputRuleProcessor<T> {
             Predicate<RuleEntry> removeForWhitelist,
             OutputDeduplicator deduplicator,
             Consumer<T> sink) {
+        this(policy, removeForWhitelist, SyntaxValidator.acceptAll(), deduplicator, sink);
+    }
+
+    public OutputRuleProcessor(
+            ConversionPolicy policy,
+            Predicate<RuleEntry> removeForWhitelist,
+            SyntaxValidator syntax,
+            OutputDeduplicator deduplicator,
+            Consumer<T> sink) {
         this.policy = policy;
         this.removeForWhitelist = removeForWhitelist;
+        this.syntax = syntax;
         this.deduplicator = deduplicator;
         this.sink = sink;
     }
@@ -60,6 +71,10 @@ public final class OutputRuleProcessor<T> {
         if (projected.encoded() instanceof String text && text.length() > MAX_RENDERED_LENGTH) {
             return WriteResult.UNSUPPORTED;
         }
+        // 语法校验放在去重之前: 非法行不应该占用去重键, 否则同内容的合法行会被误判为重复。
+        if (projected.encoded() instanceof String text && !syntaxApplies(projected) && !syntax.isValid(text)) {
+            return WriteResult.INVALID_SYNTAX;
+        }
         // 去重键取“最终渲染文本”: 两条不同的规范化规则可能渲染成同一行(白名单补写、精确域名与
         // 后缀域名落到同一 dnsmasq/smartdns 语法等)。顺序敏感规则也只有在渲染文本逐字相同时才
         // 会被合并, 而逐字相同即语义相同, 不会破坏先后关系。
@@ -68,6 +83,10 @@ public final class OutputRuleProcessor<T> {
         }
         sink.accept(projected.encoded());
         return projected.passthrough() ? WriteResult.PASSTHROUGH : WriteResult.WRITTEN;
+    }
+
+    private boolean syntaxApplies(ProjectedRule<T> projected) {
+        return projected.passthrough() && !syntax.validatesPassthrough();
     }
 
     private static byte[] dedupKey(ProjectedRule<?> projected) {

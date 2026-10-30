@@ -9,13 +9,19 @@ public record OutputSpec(
         RuleDialect dialect,
         ContainerFormat container,
         String fileHeader,
-        Set<RuleCategory> exclude) {
+        Set<RuleCategory> exclude,
+        RuleShape shape) {
 
     public OutputSpec {
         exclude = Set.copyOf(exclude);
     }
 
+    public OutputSpec(Path path, RuleType type, RuleDialect dialect, ContainerFormat container, String fileHeader,
+            Set<RuleCategory> exclude) {
+        this(path, type, dialect, container, fileHeader, exclude, RuleShape.ALL);
+    }
+
     public OutputSpec(Path path, RuleType type, RuleDialect dialect, ContainerFormat container, String fileHeader) {
-        this(path, type, dialect, container, fileHeader, Set.of());
+        this(path, type, dialect, container, fileHeader, Set.of(), RuleShape.ALL);
     }
 }

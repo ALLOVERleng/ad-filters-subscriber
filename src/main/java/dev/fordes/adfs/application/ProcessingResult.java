@@ -14,6 +14,7 @@ public record ProcessingResult(
         long opaqueRules,
         long uniqueRules,
         long duplicateRules,
+        long allowOverridden,
         int hashEntries,
         int hashCapacity,
         int hashCollisions,

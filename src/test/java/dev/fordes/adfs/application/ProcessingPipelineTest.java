@@ -26,6 +26,7 @@ import dev.fordes.adfs.config.InputSpec;
 import dev.fordes.adfs.config.OutputSpec;
 import dev.fordes.adfs.config.RuleCategory;
 import dev.fordes.adfs.config.RuleDialect;
+import dev.fordes.adfs.config.RuleShape;
 import dev.fordes.adfs.config.RuleType;
 import dev.fordes.adfs.format.FormatRegistry;
 import dev.fordes.adfs.publish.OutputPublisher;
@@ -114,6 +115,32 @@ final class ProcessingPipelineTest {
         assertTrue(hosts.contains("blocked.example"));
         assertFalse(singBox.contains("white.example"));
         assertTrue(singBox.contains("blocked.example"));
+        // 白名单是“减法”: 阻断行不再出现。放行行本身包含 `||white.example^` 子串,
+        // 因此这里按整行比较。
+        assertFalse(Files.readAllLines(outputDir.resolve("adguard.txt")).contains("||white.example^"));
+        assertFalse(Files.readAllLines(outputDir.resolve("smartdns.conf"))
+                .contains("address /-.white.example/0.0.0.0"));
+    }
+
+    @Test
+    void dropsRulesExcludedByTheirSource() throws IOException {
+        Path input = temporaryDirectory.resolve("excluded.hosts");
+        Files.writeString(input, "0.0.0.0 gh-proxy.com\n0.0.0.0 sub.gh-proxy.com\n0.0.0.0 other.example\n");
+        Path outputDir = temporaryDirectory.resolve("source-exclude-output");
+        EffectiveConfig base = TestConfigs.create(input, RuleType.HOSTS, RuleDialect.NONE, outputDir,
+                List.of(TestConfigs.textOutput("hosts.txt", RuleType.HOSTS, RuleDialect.NONE)), false);
+        EffectiveConfig config = new EffectiveConfig(base.outputDir(), base.inputLimits(), base.http(), base.rules(),
+                base.conversion(), base.dns(),
+                List.of(new InputSpec("upstream", new LocalSource(input), RuleType.HOSTS, RuleDialect.NONE,
+                        List.of("gh-proxy.com"))),
+                base.outputs());
+
+        ProcessingResult result = pipeline().process(config);
+
+        // 源级排除在落盘前生效: 该域及其子域都不会进入任何产物。
+        assertEquals("0.0.0.0 other.example\n", Files.readString(outputDir.resolve("hosts.txt")));
+        // 被排除的规则不进入解析统计, 也不参与去重。
+        assertEquals(1, result.semanticRules());
     }
 
     @Test
@@ -147,6 +174,68 @@ final class ProcessingPipelineTest {
         assertTrue(all.contains("||suffix.example^"));
         assertEquals(2, result.outputs().get(Path.of("browser.txt")).filtered());
         assertEquals(0, result.outputs().get(Path.of("all.txt")).filtered());
+    }
+
+    @Test
+    void dropsBlockedRuleWhenSameTargetIsAllowed() throws IOException {
+        Path input = temporaryDirectory.resolve("allow.txt");
+        Files.writeString(input, """
+                ||dup.example^
+                @@||dup.example^
+                ||keep.example^
+                """, StandardCharsets.UTF_8);
+        Path outputDir = temporaryDirectory.resolve("allow-output");
+        EffectiveConfig config = TestConfigs.create(input, RuleType.ADBLOCK, RuleDialect.ADGUARD, outputDir,
+                List.of(TestConfigs.textOutput("out.txt", RuleType.ADBLOCK, RuleDialect.ADGUARD)), false);
+
+        ProcessingResult result = pipeline().process(config);
+
+        List<String> lines = Files.readAllLines(outputDir.resolve("out.txt"));
+        assertTrue(lines.contains("@@||dup.example^"));
+        assertFalse(lines.contains("||dup.example^"));
+        assertTrue(lines.contains("||keep.example^"));
+        assertEquals(1, result.allowOverridden());
+    }
+
+    @Test
+    void dropsBlockWhenAnotherInputAllowsTheSameDomain() throws IOException {
+        Path black = temporaryDirectory.resolve("black.hosts");
+        Files.writeString(black, "0.0.0.0 dup.example\n0.0.0.0 keep.example\n", StandardCharsets.UTF_8);
+        Path allow = temporaryDirectory.resolve("allow.txt");
+        Files.writeString(allow, "@@||dup.example^\n", StandardCharsets.UTF_8);
+        Path outputDir = temporaryDirectory.resolve("cross-allow-output");
+        EffectiveConfig base = TestConfigs.create(black, RuleType.HOSTS, RuleDialect.NONE, outputDir,
+                List.of(TestConfigs.textOutput("hosts.txt", RuleType.HOSTS, RuleDialect.NONE)), false);
+        EffectiveConfig config = new EffectiveConfig(base.outputDir(), base.inputLimits(), base.http(), base.rules(),
+                base.conversion(), base.dns(),
+                List.of(new InputSpec("black", new LocalSource(black), RuleType.HOSTS, RuleDialect.NONE),
+                        new InputSpec("allow", new LocalSource(allow), RuleType.ADBLOCK, RuleDialect.ADGUARD)),
+                base.outputs());
+
+        ProcessingResult result = pipeline().process(config);
+
+        // 黑白名单来自不同格式的不同上游时, 仍按域名归一抵消: 保留白名单, 剔除阻断规则。
+        assertEquals("0.0.0.0 keep.example\n", Files.readString(outputDir.resolve("hosts.txt")));
+        assertEquals(1, result.allowOverridden());
+    }
+
+    @Test
+    void splitsElementRulesAndUrlRulesIntoTwoFiles() throws IOException {
+        Path input = temporaryDirectory.resolve("split.txt");
+        Files.writeString(input, "||tracker.example^\nexample.com##.advert\n", StandardCharsets.UTF_8);
+        Path outputDir = temporaryDirectory.resolve("split-output");
+        EffectiveConfig config = TestConfigs.create(input, RuleType.ADBLOCK, RuleDialect.ADGUARD, outputDir,
+                List.of(TestConfigs.textOutput("browser.element.txt", RuleType.ADBLOCK, RuleDialect.ADGUARD,
+                                RuleShape.ELEMENT),
+                        TestConfigs.textOutput("browser.url.txt", RuleType.ADBLOCK, RuleDialect.ADGUARD,
+                                RuleShape.URL)), false);
+
+        ProcessingResult result = pipeline().process(config);
+
+        assertEquals("example.com##.advert\n", Files.readString(outputDir.resolve("browser.element.txt")));
+        assertEquals("||tracker.example^\n", Files.readString(outputDir.resolve("browser.url.txt")));
+        assertEquals(1, result.outputs().get(Path.of("browser.element.txt")).filtered());
+        assertEquals(1, result.outputs().get(Path.of("browser.url.txt")).filtered());
     }
 
     private static ProcessingPipeline pipeline() {
@@ -308,7 +397,7 @@ final class ProcessingPipelineTest {
     }
 
     @Test
-    void preservesComplexAdblockRulesAndAddsWhitelistException() throws IOException {
+    void subtractsWhitelistedNetworkBlocksAndAddsException() throws IOException {
         Path input = temporaryDirectory.resolve("important.txt");
         Files.writeString(input, "||white.example^$important\n||white.example^$redirect=noopjs\n"
                 + "white.example##.advert\n||blocked.example^\n");
@@ -321,13 +410,15 @@ final class ProcessingPipelineTest {
 
         pipeline().process(config);
 
-        assertEquals("||white.example^$important\n||white.example^$redirect=noopjs\n"
-                + "white.example##.advert\n||blocked.example^\n@@||white.example^\n",
+        // 白名单在写出前做减法: 结构化的阻断规则直接消失, 只补写一条显式放行;
+        // 无法结构化判定的透传规则($redirect)与元素规则保持原样。
+        assertEquals("||white.example^$redirect=noopjs\nwhite.example##.advert\n"
+                + "||blocked.example^\n@@||white.example^\n",
                 Files.readString(outputDir.resolve("adguard.txt")));
     }
 
     @Test
-    void preservesNonEquivalentSmartDnsRulesAndAddsWhitelistRule() throws IOException {
+    void subtractsWhitelistedSmartDnsBlocksAndAddsAllowRule() throws IOException {
         Path input = temporaryDirectory.resolve("smartdns.conf");
         Files.writeString(input, "address /child.white.example/#\naddress /-.white.example/0.0.0.0\n"
                 + "domain-rules /white.example/ -address #\naddress /blocked.example/#\n");
@@ -340,8 +431,8 @@ final class ProcessingPipelineTest {
 
         pipeline().process(config);
 
-        assertEquals("address /child.white.example/#\naddress /-.white.example/0.0.0.0\n"
-                + "domain-rules /white.example/ -address #\naddress /blocked.example/#\n"
+        // 白名单覆盖的阻断/地址改写行在写出前被减掉; 无法判定的透传规则保持原样。
+        assertEquals("domain-rules /white.example/ -address #\naddress /blocked.example/#\n"
                 + "address /white.example/-\n",
                 Files.readString(outputDir.resolve("smartdns.conf")));
     }

@@ -125,6 +125,12 @@ adfs:
       path: 'https://raw.githubusercontent.com/badmojr/1Hosts/master/Lite/adblock.txt'
       type: adblock
       dialect: core
+      # 该源把 GitHub 加速网关当作垃圾域名整域拦截(||gh-proxy.com^ / ||gh-proxy.org^,
+      # 位于 Lite/adblock.txt 第 36630-36631 行, 与随机垃圾域名 .online/.store 混在同一批导入),
+      # 属于上游误报: 在源级丢弃, 避免污染所有格式的产物。
+      exclude:
+        - "gh-proxy.com"
+        - "gh-proxy.org"
 
     - name: HaGeZi's Pro DNS Blocklist
       path: https://raw.githubusercontent.com/hagezi/dns-blocklists/refs/heads/main/adblock/pro.txt
@@ -161,20 +167,25 @@ adfs:
   output:
     # 浏览器列表只保留浏览器语义的规则: hosts/dns/mihomo/sing-box 类输入产生的纯域名阻断
     # 在这里既无法覆盖子域、也把文件撑到超出 jsDelivr 的 20MB 上限, 因此统一排除。
+    # split: 元素规则与 URL 规则分成两个文件(adblock 文本输出默认开启), 订阅方可以只取其中一类;
+    # 同时 @@ 放行只写入 URL 规则文件, 元素文件保持纯 cosmetic。
     - name: easylist.txt
       type: adblock
       dialect: adguard
       exclude: [dns-domain]
+      split: true
 
     - name: ubo.txt
       type: adblock
       dialect: ubo
       exclude: [dns-domain]
+      split: true
 
     - name: abp.txt
       type: adblock
       dialect: abp
       exclude: [dns-domain]
+      split: true
 
     - name: dns.txt
       type: dns
@@ -211,12 +222,18 @@ adfs:
     rules:
       min-length: 1
       max-length: 65536  # 存在文本输入时，不得超过 input.max-line-length。
+      # 同一域名同时出现在黑名单与白名单时，保留白名单、剔除阻断规则（默认已开启，此处显式声明）。
+      allow-overrides-block: true
       whitelist:
         - "edge.microsoft.com"
         - "public.gensparkspace.com"
         - "assets.msn.com"
         # 华为应用商店相关域名
         - "store-drcn.hispace.dbankcloud.com"
+        # GitHub 加速网关: 除 1Hosts 外, 任何上游若再次收录也在写出前减掉,
+        # 否则 hosts / clash / sing-box 这类无法表达 allow 的产物会把域名指向 0.0.0.0。
+        - "gh-proxy.com"
+        - "gh-proxy.org"
 
     conversion:
       # 精确主机(dns 语法的 |domain|)没有等价写法, 只能扩展为“域名+子域”;

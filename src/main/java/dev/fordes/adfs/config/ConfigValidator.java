@@ -67,7 +67,8 @@ public final class ConfigValidator {
                 new HttpConfig(http.getConnectTimeout(), http.getReadTimeout(), http.getMaxRedirects(),
                         http.getRetries(), http.getUserAgent()),
                 new RuleConfig(rules.getMinLength(), rules.getMaxLength(), whitelist,
-                        new PreprocessorConfig(preprocessor.getMaxDepth(), preprocessor.getMaxIncludeDepth(), trueTokens)),
+                        new PreprocessorConfig(preprocessor.getMaxDepth(), preprocessor.getMaxIncludeDepth(), trueTokens),
+                        rules.isAllowOverridesBlock()),
                 new ConversionConfig(conversion.isAllowExpansion(), conversion.isAllowReduction()),
                 new DnsConfig(dns.isEnabled(), dns.isStrictMode(), dns.getServers(), dns.getConcurrency(),
                         dns.getTimeout(), dns.getRetries(), dns.getMaxCnameDepth(),
@@ -96,7 +97,25 @@ public final class ConfigValidator {
         RuleType type = RuleType.parse(properties.getType());
         RuleDialect dialect = resolveDialect(type, properties.getDialect());
         SourceLocation source = parseSource(properties.getPath(), workingDir, name);
-        return new InputSpec(name, source, type, dialect);
+        return new InputSpec(name, source, type, dialect, normalizeExclusions(properties.getExclude()));
+    }
+
+    /**
+     * 源级排除条目只做去空白与去重，不在配置阶段判定“域名还是关键词”：
+     * 解析为域名失败时按关键词处理，误写也不会让整轮运行失败。
+     */
+    private static List<String> normalizeExclusions(List<String> patterns) {
+        if (patterns == null || patterns.isEmpty()) {
+            return List.of();
+        }
+        Set<String> normalized = new LinkedHashSet<>();
+        for (String pattern : patterns) {
+            if (pattern == null || pattern.isBlank()) {
+                continue;
+            }
+            normalized.add(pattern.strip());
+        }
+        return List.copyOf(normalized);
     }
 
     private static SourceLocation parseSource(String value, Path workingDir, String name) {
@@ -130,13 +149,14 @@ public final class ConfigValidator {
         Set<Path> paths = new HashSet<>();
         String fileHeader = adfs.getFileHeader() == null ? FileHeaderTemplate.DEFAULT : adfs.getFileHeader();
         FileHeaderTemplate.validate(fileHeader, "adfs.config.file-header");
-        return outputProperties.stream()
+        List<OutputSpec> outputs = new ArrayList<>();
+        outputProperties.stream()
                 .sorted(Comparator.comparingInt(OutputProperties::getIndex))
-                .map(properties -> createOutput(properties, outputDir, paths, fileHeader))
-                .toList();
+                .forEach(properties -> outputs.addAll(createOutput(properties, outputDir, paths, fileHeader)));
+        return List.copyOf(outputs);
     }
 
-    private static OutputSpec createOutput(
+    private static List<OutputSpec> createOutput(
             OutputProperties properties, Path outputDir, Set<Path> paths, String parentHeader) {
         Path relative;
         try {
@@ -147,12 +167,6 @@ public final class ConfigValidator {
         if (relative.toString().isEmpty() || relative.isAbsolute() || relative.startsWith("..")) {
             throw new ConfigurationException("输出路径必须是输出目录内的文件: " + properties.getName());
         }
-        Path path = outputDir.resolve(relative).normalize();
-        if (!path.startsWith(outputDir)
-                || paths.stream().anyMatch(existing -> path.startsWith(existing) || existing.startsWith(path))) {
-            throw new ConfigurationException("输出路径越界、重复或存在文件与目录冲突: " + properties.getName());
-        }
-        paths.add(path);
         RuleType type = RuleType.parse(properties.getType());
         RuleDialect dialect = resolveDialect(type, properties.getDialect());
         ContainerFormat container = resolveContainer(type, properties.getContainer());
@@ -166,6 +180,49 @@ public final class ConfigValidator {
             fileHeader = "";
         }
         FileHeaderTemplate.validate(fileHeader, field);
+        Set<RuleCategory> exclude = resolveExclude(properties);
+        String header = fileHeader.isBlank() ? "" : fileHeader;
+        // 未显式声明时: adblock 文本输出默认拆分元素规则/URL 规则, 其它格式保持单文件。
+        boolean split = properties.getSplit() == null
+                ? type == RuleType.ADBLOCK && container == ContainerFormat.TEXT
+                : properties.getSplit();
+        if (!split) {
+            Path path = registerPath(relative, outputDir, paths, properties.getName());
+            return List.of(new OutputSpec(path, type, dialect, container, header, exclude, RuleShape.ALL));
+        }
+        if (type != RuleType.ADBLOCK || container != ContainerFormat.TEXT) {
+            throw new ConfigurationException(
+                    "adfs.output[" + properties.getIndex() + "].split 仅支持 adblock 文本输出: " + relative);
+        }
+        Path element = registerPath(splitName(relative, RuleShape.ELEMENT.value()), outputDir, paths,
+                properties.getName());
+        Path url = registerPath(splitName(relative, RuleShape.URL.value()), outputDir, paths, properties.getName());
+        return List.of(
+                new OutputSpec(element, type, dialect, container, header, exclude, RuleShape.ELEMENT),
+                new OutputSpec(url, type, dialect, container, header, exclude, RuleShape.URL));
+    }
+
+    private static Path registerPath(Path relative, Path outputDir, Set<Path> paths, String name) {
+        Path path = outputDir.resolve(relative).normalize();
+        if (!path.startsWith(outputDir)
+                || paths.stream().anyMatch(existing -> path.startsWith(existing) || existing.startsWith(path))) {
+            throw new ConfigurationException("输出路径越界、重复或存在文件与目录冲突: " + name);
+        }
+        paths.add(path);
+        return relative;
+    }
+
+    private static Path splitName(Path relative, String shape) {
+        String name = relative.getFileName().toString();
+        int dot = name.lastIndexOf('.');
+        String renamed = dot > 0
+                ? name.substring(0, dot) + "." + shape + name.substring(dot)
+                : name + "." + shape;
+        Path parent = relative.getParent();
+        return parent == null ? Path.of(renamed) : parent.resolve(renamed);
+    }
+
+    private static Set<RuleCategory> resolveExclude(OutputProperties properties) {
         Set<RuleCategory> exclude = new HashSet<>();
         List<String> configuredExclude = properties.getExclude() == null ? List.of() : properties.getExclude();
         for (String raw : configuredExclude) {
@@ -176,8 +233,7 @@ public final class ConfigValidator {
                     "adfs.output[" + properties.getIndex() + "].exclude 含未知类别: " + raw));
             exclude.add(category);
         }
-        return new OutputSpec(relative, type, dialect, container, fileHeader.isBlank() ? "" : fileHeader,
-                Set.copyOf(exclude));
+        return Set.copyOf(exclude);
     }
 
     private static RuleDialect resolveDialect(RuleType type, String configured) {

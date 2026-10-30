@@ -18,6 +18,7 @@ import dev.fordes.adfs.config.OutputSpec;
 import dev.fordes.adfs.config.RuleDialect;
 import dev.fordes.adfs.error.InputException;
 import dev.fordes.adfs.format.adblock.DisableIndex;
+import dev.fordes.adfs.format.validate.ArtifactValidator;
 import dev.fordes.adfs.publish.OutputPublisher;
 import dev.fordes.adfs.publish.OutputHeader;
 import dev.fordes.adfs.publish.PublishManifest;
@@ -25,8 +26,10 @@ import dev.fordes.adfs.publish.StagingWorkspace.Workspace;
 import dev.fordes.adfs.publish.StagingWorkspace;
 import dev.fordes.adfs.report.ProcessingMetrics;
 import dev.fordes.adfs.report.ProcessingStage;
+import dev.fordes.adfs.rule.conversion.AllowIndex;
 import dev.fordes.adfs.rule.dedup.CanonicalStore;
 import dev.fordes.adfs.rule.dedup.RuleDeduplicator;
+import dev.fordes.adfs.rule.filter.SourceExclusion;
 import dev.fordes.adfs.rule.model.RuleEntry;
 import dev.fordes.adfs.rule.normalize.RuleNormalizer;
 import dev.fordes.adfs.rule.spool.RuleSpool;
@@ -103,11 +106,22 @@ public final class ProcessingPipeline {
                     .findFirst()
                     .orElseThrow(() -> new InputException("没有可用的来源读取器: " + input.name()));
             RuleParser parser = formats.createParser(input, config);
+            SourceExclusion exclusion = SourceExclusion.of(input.exclude());
+            long[] excluded = new long[1];
             long parsedBefore = metrics.parsedCount();
             Path inputSpoolPath = runDir.resolve("input-" + inputIndex + ".bin");
             try (RuleSpool inputSpool = new RuleSpool(inputSpoolPath, config.rules().maxLength());
                     SourceSession session = sourceReader.open(input, config)) {
-                ParseResult result = parser.parse(session, entry -> inputSpool.accept(RuleNormalizer.normalize(entry)));
+                ParseResult result = parser.parse(session, entry -> {
+                    RuleEntry normalized = RuleNormalizer.normalize(entry);
+                    // 源级排除在落盘之前执行: 被排除的规则不参与去重、不进入任何产物,
+                    // 也不需要下游 Writer 再判断一次。
+                    if (exclusion.excludes(normalized)) {
+                        excluded[0]++;
+                        return;
+                    }
+                    inputSpool.accept(normalized);
+                });
                 inputSpool.finishWriting();
                 if (result == ParseResult.COMPLETE) {
                     inputSpool.replay(entry -> {
@@ -116,6 +130,9 @@ public final class ProcessingPipeline {
                     });
                 }
                 metrics.inputFinished(input.name(), session.metrics(metrics.parsedCount() - parsedBefore));
+            }
+            if (excluded[0] > 0) {
+                log.info("输入源「{}」按 exclude 丢弃 {} 条规则", input.name(), excluded[0]);
             }
             log.info("输入源「{}」解析完成, 耗时 {} ms", input.name(), (System.nanoTime() - started) / 1_000_000);
             inputIndex++;
@@ -132,13 +149,14 @@ public final class ProcessingPipeline {
                 DisableIndex disabled = createDisableIndex(workspace, spool);
                 OutputSet outputs = createOutputs(config, workspace)) {
             RuleDeduplicator deduplicator = new RuleDeduplicator(store);
+            AllowIndex allows = createAllowIndex(spool, config.rules().allowOverridesBlock());
             if (config.dns().enabled()) {
                 dnsValidator.validate(spool, config.dns(), deduplicator,
-                        entry -> enabled(entry, disabled),
+                        entry -> enabled(entry, disabled, allows, metrics),
                         entry -> distributeUnique(entry, outputs, metrics), metrics);
             } else {
                 spool.replay(entry -> {
-                    if (enabled(entry, disabled)) {
+                    if (enabled(entry, disabled, allows, metrics)) {
                         distribute(entry, deduplicator, outputs, metrics);
                     }
                 });
@@ -147,7 +165,15 @@ public final class ProcessingPipeline {
             outputs.targets().forEach(output -> metrics.finished(output.spec(), output.finish()));
             for (OutputTarget output : outputs.targets()) {
                 output.close();
-                OutputHeader.prepend(workspace, output.spec(), generatedAt, output.ruleCount());
+                ArtifactValidator.Result validated = ArtifactValidator.validate(
+                        workspace.nextDir().resolve(output.spec().path()), output.spec());
+                metrics.invalidLines(output.spec(), validated.dropped());
+                if (validated.dropped() > 0) {
+                    log.warn("产物「{}」有 {} 行不符合 {} 语法, 已在发布前剔除",
+                            output.spec().path(), validated.dropped(), output.spec().type().value());
+                }
+                OutputHeader.prepend(workspace, output.spec(), generatedAt,
+                        Math.max(0, output.ruleCount() - (int) validated.dropped()));
             }
         }
     }
@@ -171,8 +197,27 @@ public final class ProcessingPipeline {
         }
     }
 
-    private static boolean enabled(RuleEntry entry, DisableIndex disabled) {
-        return !disabled.isControl(entry) && !disabled.isDisabled(entry);
+    private static AllowIndex createAllowIndex(RuleSpool spool, boolean allowOverridesBlock) {
+        AllowIndex index = new AllowIndex();
+        if (allowOverridesBlock) {
+            spool.replay(index::accept);
+        }
+        return index;
+    }
+
+    private static boolean enabled(
+            RuleEntry entry, DisableIndex disabled, AllowIndex allows, ProcessingMetrics metrics) {
+        if (disabled.isControl(entry) || disabled.isDisabled(entry)) {
+            return false;
+        }
+        // 放行规则优先级更高, 同目标的阻断规则不会生效, 直接剔除以免产物虚高。
+        if (allows.overrides(entry)) {
+            metrics.allowOverridden();
+            log.debug("阻断规则被同目标白名单覆盖, 已跳过:  {} --> {}",
+                    MDC.get(RuleSpool.INPUT), MDC.get(RuleSpool.INPUT_RULE));
+            return false;
+        }
+        return true;
     }
 
     private OutputSet createOutputs(EffectiveConfig config, Workspace workspace) {

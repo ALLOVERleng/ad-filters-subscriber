@@ -8,6 +8,16 @@ adfs:
       path: https://example.org/filter.txt
       type: adblock
       dialect: ubo  # Adblock 方言：core（默认）、abp、adguard、ubo。
+      # exclude 是“源级排除”：命中的规则在进入处理管线之前丢弃，用于隔离上游误报，
+      # 例如某个列表把公共基础设施整域拦截。支持三种写法：
+      #   example.net    —— 该域及其子域
+      #   *.example.net  —— 仅子域
+      #   adserver       —— 关键词，不区分大小写匹配规则主体
+      # 只丢弃阻断/改写类规则，放行（@@）与 IP/CIDR 规则不受影响；误写不会让运行失败。
+      # exclude:
+      #   - "example.net"
+      #   - "*.tracking.example.net"
+      #   - "adserver"
 
     - name: local-hosts
       path: inputs/hosts.txt
@@ -25,6 +35,10 @@ adfs:
       # exclude 可排除整类规则，目前支持 dns-domain（hosts/dns/mihomo/sing-box 类输入产生的
       # 纯域名阻断）。浏览器列表建议排除：这类规则在浏览器里覆盖不到子域，且会把产物体积推高。
       # exclude: [dns-domain]
+      # split 仅适用于 adblock 文本输出：拆成元素规则与 URL 规则两个文件
+      # （easylist.txt -> easylist.element.txt + easylist.url.txt），白名单放行只写入 URL 文件。
+      # 未声明时 adblock 文本输出默认拆分；显式 split: false 才合并成单文件。
+      # split: true
 
     - name: dns.txt
       type: dns
@@ -81,7 +95,12 @@ adfs:
     rules:
       min-length: 1
       max-length: 65536  # 存在文本输入时，不得超过 input.max-line-length。
-      whitelist: []  # 域名白名单，例如 [www.example.org]。
+      # 域名白名单：覆盖该域及其子域。命中的阻断规则在写出前被减掉，7 种格式结果一致；
+      # adblock / dns / smartdns 还会额外补写一条显式放行，便于与本列表之外的规则源共存。
+      whitelist: []  # 例如 [www.example.org]。
+      # 同一目标既被 @@ 放行又被阻断时，放行优先：保留白名单规则、剔除对应阻断规则。
+      # 目标按域名归一（||x^、|x|、0.0.0.0 x、address /x/... 都算同一目标），不做父域覆盖。
+      allow-overrides-block: true
       preprocessor:
         max-depth: 32
         max-include-depth: 8

@@ -1,6 +1,7 @@
 package dev.fordes.adfs;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -37,7 +38,10 @@ final class AdfsCommandTest {
                 """.formatted(input, output));
 
         assertEquals(0, AdfsCommand.execute(new String[]{"-c", config.toString()}));
-        assertTrue(Files.readString(output.resolve("rules.txt")).contains("||ads.example^"));
+        // adblock 文本输出默认拆分: URL 规则与元素规则各一个文件。
+        assertTrue(Files.readString(output.resolve("rules.url.txt")).contains("||ads.example^"));
+        assertTrue(Files.exists(output.resolve("rules.element.txt")));
+        assertFalse(Files.exists(output.resolve("rules.txt")));
     }
 
     @Test

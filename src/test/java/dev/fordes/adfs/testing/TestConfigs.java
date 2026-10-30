@@ -19,6 +19,7 @@ import dev.fordes.adfs.config.InputSpec.LocalSource;
 import dev.fordes.adfs.config.OutputSpec;
 import dev.fordes.adfs.config.RuleCategory;
 import dev.fordes.adfs.config.RuleDialect;
+import dev.fordes.adfs.config.RuleShape;
 import dev.fordes.adfs.config.RuleType;
 
 public final class TestConfigs {
@@ -57,5 +58,9 @@ public final class TestConfigs {
     public static OutputSpec textOutput(String name, RuleType type, RuleDialect dialect,
             Set<RuleCategory> exclude) {
         return new OutputSpec(Path.of(name), type, dialect, ContainerFormat.TEXT, "", exclude);
+    }
+
+    public static OutputSpec textOutput(String name, RuleType type, RuleDialect dialect, RuleShape shape) {
+        return new OutputSpec(Path.of(name), type, dialect, ContainerFormat.TEXT, "", Set.of(), shape);
     }
 }

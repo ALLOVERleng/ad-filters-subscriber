@@ -23,6 +23,7 @@ public final class ProcessingMetrics {
     private long opaqueRules;
     private long uniqueRules;
     private long duplicateRules;
+    private long allowOverridden;
     private long dnsChecked;
     private long dnsValid;
     private long dnsInvalid;
@@ -78,6 +79,11 @@ public final class ProcessingMetrics {
         duplicateRules++;
     }
 
+    /** 同目标已有放行规则、因而被剔除的阻断规则条数。 */
+    public void allowOverridden() {
+        allowOverridden++;
+    }
+
     public void finishHashTable(int entries, int capacity, int collisions) {
         hashEntries = entries;
         hashCapacity = capacity;
@@ -86,6 +92,13 @@ public final class ProcessingMetrics {
 
     public void wrote(OutputSpec output, WriteResult result) {
         outputs.get(output.path()).add(result);
+    }
+
+    /** 产物级校验在发布前剔除的行数, 与写出阶段的 {@code INVALID_SYNTAX} 合并统计。 */
+    public void invalidLines(OutputSpec output, long count) {
+        if (count > 0) {
+            outputs.get(output.path()).invalidLines(count);
+        }
     }
 
     public void dnsChecked() {
@@ -122,7 +135,7 @@ public final class ProcessingMetrics {
         long elapsedMillis = (System.nanoTime() - startedNanos) / 1_000_000;
         DnsMetrics dns = new DnsMetrics(dnsChecked, dnsValid, dnsInvalid, dnsFailed, dnsSkipped, dnsMerged,
                 dnsCacheEntries);
-        return new ProcessingResult(inputs, semanticRules, opaqueRules, uniqueRules, duplicateRules,
+        return new ProcessingResult(inputs, semanticRules, opaqueRules, uniqueRules, duplicateRules, allowOverridden,
                 hashEntries, hashCapacity, hashCollisions, dns,
                 snapshots, elapsedMillis, sources, stages);
     }
@@ -136,6 +149,7 @@ final class MutableOutputMetrics {
     private long whitelistRemoved;
     private long unsupported;
     private long filtered;
+    private long invalidSyntax;
     private long whitelistAdded;
     private long bytes;
 
@@ -148,6 +162,10 @@ final class MutableOutputMetrics {
         duplicates += result.duplicates();
     }
 
+    void invalidLines(long count) {
+        invalidSyntax += count;
+    }
+
     void add(WriteResult result) {
         switch (result) {
             case WRITTEN -> written++;
@@ -156,11 +174,12 @@ final class MutableOutputMetrics {
             case WHITELIST_REMOVED -> whitelistRemoved++;
             case UNSUPPORTED -> unsupported++;
             case FILTERED -> filtered++;
+            case INVALID_SYNTAX -> invalidSyntax++;
         }
     }
 
     OutputMetrics snapshot() {
         return new OutputMetrics(written, passthrough, duplicates, whitelistRemoved, unsupported, filtered,
-                whitelistAdded, bytes);
+                invalidSyntax, whitelistAdded, bytes);
     }
 }

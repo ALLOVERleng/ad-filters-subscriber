@@ -13,9 +13,12 @@ import dev.fordes.adfs.config.ContainerFormat;
 import dev.fordes.adfs.config.OutputSpec;
 import dev.fordes.adfs.config.RuleCategory;
 import dev.fordes.adfs.config.RuleDialect;
+import dev.fordes.adfs.config.RuleShape;
 import dev.fordes.adfs.config.RuleType;
 import dev.fordes.adfs.rule.model.AdblockNetworkRule;
 import dev.fordes.adfs.rule.model.AdblockPattern;
+import dev.fordes.adfs.rule.model.CosmeticOperator;
+import dev.fordes.adfs.rule.model.CosmeticRule;
 import dev.fordes.adfs.rule.model.DnsAddressRule;
 import dev.fordes.adfs.rule.model.DnsResponse;
 import dev.fordes.adfs.rule.model.DomainName;
@@ -35,6 +38,25 @@ final class RuleFilterTest {
 
     private static final OutputSpec KEEPING = new OutputSpec(
             Path.of("all.txt"), RuleType.ADBLOCK, RuleDialect.ADGUARD, ContainerFormat.TEXT, "");
+
+    private static final OutputSpec ELEMENT_ONLY = new OutputSpec(
+            Path.of("element.txt"), RuleType.ADBLOCK, RuleDialect.ADGUARD, ContainerFormat.TEXT, "",
+            Set.of(), RuleShape.ELEMENT);
+
+    private static final OutputSpec URL_ONLY = new OutputSpec(
+            Path.of("url.txt"), RuleType.ADBLOCK, RuleDialect.ADGUARD, ContainerFormat.TEXT, "",
+            Set.of(), RuleShape.URL);
+
+    @Test
+    void separatesElementRulesFromUrlRules() {
+        CosmeticRule cosmetic = new CosmeticRule(List.of(), false, CosmeticOperator.ELEMENT_HIDE, ".ad",
+                RuleDialect.ADGUARD);
+
+        assertFalse(RuleFilter.isExcluded(ELEMENT_ONLY, cosmetic));
+        assertTrue(RuleFilter.isExcluded(URL_ONLY, cosmetic));
+        assertTrue(RuleFilter.isExcluded(ELEMENT_ONLY, domainRule(RuleAction.BLOCK)));
+        assertFalse(RuleFilter.isExcluded(URL_ONLY, domainRule(RuleAction.BLOCK)));
+    }
 
     @Test
     void excludesDomainBlocksProducedByDnsInputs() {

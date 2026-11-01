@@ -14,14 +14,19 @@ import dev.fordes.adfs.rule.filter.SourceExclusion;
  *                与关键词三种写法，见 {@link SourceExclusion}。
  */
 public record InputSpec(String name, SourceLocation source, RuleType type, RuleDialect dialect,
-        List<String> exclude) {
+        List<String> exclude, boolean optional) {
 
     public InputSpec {
         exclude = List.copyOf(exclude);
     }
 
     public InputSpec(String name, SourceLocation source, RuleType type, RuleDialect dialect) {
-        this(name, source, type, dialect, List.of());
+        this(name, source, type, dialect, List.of(), false);
+    }
+
+    public InputSpec(String name, SourceLocation source, RuleType type, RuleDialect dialect,
+            List<String> exclude) {
+        this(name, source, type, dialect, exclude, false);
     }
 
     public sealed interface SourceLocation permits HttpSource, LocalSource {

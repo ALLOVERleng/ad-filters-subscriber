@@ -97,7 +97,8 @@ public final class ConfigValidator {
         RuleType type = RuleType.parse(properties.getType());
         RuleDialect dialect = resolveDialect(type, properties.getDialect());
         SourceLocation source = parseSource(properties.getPath(), workingDir, name);
-        return new InputSpec(name, source, type, dialect, normalizeExclusions(properties.getExclude()));
+        return new InputSpec(name, source, type, dialect, normalizeExclusions(properties.getExclude()),
+                properties.isOptional());
     }
 
     /**

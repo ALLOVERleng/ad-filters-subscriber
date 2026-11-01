@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import dev.fordes.adfs.config.EffectiveConfig;
+import dev.fordes.adfs.config.EffectiveConfig.HttpConfig;
 import dev.fordes.adfs.config.InputSpec.HttpSource;
 import dev.fordes.adfs.config.InputSpec;
 import dev.fordes.adfs.config.RuleDialect;
@@ -74,6 +75,46 @@ final class HttpSourceReaderTest {
 
         assertTrue(exception.getMessage().contains("HTTP 503"));
         assertTrue(exception.getMessage().contains("temporarily unavailable"));
+    }
+
+    @Test
+    void retriesTransientNotFoundBeforeSucceeding() throws IOException {
+        int[] attempts = {0};
+        server.createContext("/flaky.txt", exchange -> {
+            attempts[0]++;
+            if (attempts[0] == 1) {
+                respond(exchange, 404, "blob not found");
+                return;
+            }
+            respond(exchange, 200, "example.com\n");
+        });
+        EffectiveConfig config = config(baseUri.resolve("/flaky.txt"), 2);
+
+        try (SourceSession session = new HttpSourceReader().open(config.inputs().getFirst(), config)) {
+            assertEquals("example.com\n",
+                    new String(session.root().input().readAllBytes(), StandardCharsets.UTF_8));
+        }
+        assertEquals(2, attempts[0]);
+    }
+
+    @Test
+    void reportsNotFoundAfterRetriesExhausted() {
+        server.createContext("/missing.txt", exchange -> respond(exchange, 404, "blob not found"));
+        EffectiveConfig config = config(baseUri.resolve("/missing.txt"), 1);
+
+        InputException exception = assertThrows(InputException.class,
+                () -> new HttpSourceReader().open(config.inputs().getFirst(), config));
+
+        assertTrue(exception.getMessage().contains("HTTP 404"));
+    }
+
+    private EffectiveConfig config(URI uri, int retries) {
+        EffectiveConfig base = config(uri);
+        return new EffectiveConfig(
+                base.outputDir(), base.inputLimits(),
+                new HttpConfig(base.http().connectTimeout(), base.http().readTimeout(),
+                        base.http().maxRedirects(), retries, base.http().userAgent()),
+                base.rules(), base.conversion(), base.dns(), base.inputs(), base.outputs());
     }
 
     private EffectiveConfig config(URI uri) {

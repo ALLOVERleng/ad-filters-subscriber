@@ -130,6 +130,15 @@ public final class ProcessingPipeline {
                     });
                 }
                 metrics.inputFinished(input.name(), session.metrics(metrics.parsedCount() - parsedBefore));
+            } catch (InputException exception) {
+                if (!input.optional()) {
+                    throw exception;
+                }
+                // 可选来源: 上游偶发 404/5xx 时跳过该源, 其余来源照常产出, 避免整批产物停止更新。
+                metrics.inputSkipped(input.name(), exception.getMessage());
+                log.warn("可选输入源「{}」读取失败, 已跳过: {}", input.name(), exception.getMessage());
+                inputIndex++;
+                continue;
             }
             if (excluded[0] > 0) {
                 log.info("输入源「{}」按 exclude 丢弃 {} 条规则", input.name(), excluded[0]);

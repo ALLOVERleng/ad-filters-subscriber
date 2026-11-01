@@ -3,6 +3,7 @@ package dev.fordes.adfs.application;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -28,6 +29,7 @@ import dev.fordes.adfs.config.RuleCategory;
 import dev.fordes.adfs.config.RuleDialect;
 import dev.fordes.adfs.config.RuleShape;
 import dev.fordes.adfs.config.RuleType;
+import dev.fordes.adfs.error.InputException;
 import dev.fordes.adfs.format.FormatRegistry;
 import dev.fordes.adfs.publish.OutputPublisher;
 import dev.fordes.adfs.publish.StagingWorkspace;
@@ -141,6 +143,44 @@ final class ProcessingPipelineTest {
         List<String> wildcard = Files.readAllLines(outputDir.resolve("wildcard.txt"));
         assertTrue(wildcard.contains("*.ad.qq.com"));
         assertFalse(wildcard.contains("ads"));
+    }
+
+    @Test
+    void skipsOptionalInputAndKeepsProcessingOtherSources() throws IOException {
+        Path valid = temporaryDirectory.resolve("optional-main.txt");
+        Files.writeString(valid, "0.0.0.0 blocked.example\n", StandardCharsets.UTF_8);
+        Path missing = temporaryDirectory.resolve("optional-missing.txt");
+        Path outputDir = temporaryDirectory.resolve("optional-output");
+        List<InputSpec> inputs = List.of(
+                new InputSpec("broken", new LocalSource(missing), RuleType.HOSTS, RuleDialect.NONE, List.of(), true),
+                new InputSpec("main", new LocalSource(valid), RuleType.HOSTS, RuleDialect.NONE));
+        EffectiveConfig base = TestConfigs.create(valid, RuleType.HOSTS, RuleDialect.NONE, outputDir,
+                List.of(TestConfigs.textOutput("hosts.txt", RuleType.HOSTS, RuleDialect.NONE)), false);
+        EffectiveConfig config = new EffectiveConfig(base.outputDir(), base.inputLimits(), base.http(), base.rules(),
+                base.conversion(), base.dns(), inputs, base.outputs());
+
+        ProcessingResult result = pipeline().process(config);
+
+        // 可选来源失败只记录跳过, 其余来源照常产出。
+        assertEquals(1, result.skipped().size());
+        assertTrue(result.skipped().containsKey("broken"));
+        assertTrue(Files.readString(outputDir.resolve("hosts.txt")).contains("blocked.example"));
+    }
+
+    @Test
+    void failsFastWhenRequiredInputMissing() throws IOException {
+        Path valid = temporaryDirectory.resolve("required-main.txt");
+        Files.writeString(valid, "0.0.0.0 blocked.example\n", StandardCharsets.UTF_8);
+        Path missing = temporaryDirectory.resolve("required-missing.txt");
+        Path outputDir = temporaryDirectory.resolve("required-output");
+        List<InputSpec> inputs = List.of(
+                new InputSpec("broken", new LocalSource(missing), RuleType.HOSTS, RuleDialect.NONE));
+        EffectiveConfig base = TestConfigs.create(valid, RuleType.HOSTS, RuleDialect.NONE, outputDir,
+                List.of(TestConfigs.textOutput("hosts.txt", RuleType.HOSTS, RuleDialect.NONE)), false);
+        EffectiveConfig config = new EffectiveConfig(base.outputDir(), base.inputLimits(), base.http(), base.rules(),
+                base.conversion(), base.dns(), inputs, base.outputs());
+
+        assertThrows(InputException.class, () -> pipeline().process(config));
     }
 
     @Test

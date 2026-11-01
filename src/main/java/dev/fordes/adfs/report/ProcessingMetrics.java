@@ -18,6 +18,7 @@ public final class ProcessingMetrics {
     private final long inputs;
     private final Map<ProcessingStage, Long> stages = new java.util.EnumMap<>(ProcessingStage.class);
     private final Map<String, InputMetrics> sources = new LinkedHashMap<>();
+    private final Map<String, String> skippedSources = new LinkedHashMap<>();
     private final Map<Path, MutableOutputMetrics> outputs = new LinkedHashMap<>();
     private long semanticRules;
     private long opaqueRules;
@@ -65,6 +66,11 @@ public final class ProcessingMetrics {
 
     public void inputFinished(String name, InputMetrics metrics) {
         sources.put(name, metrics);
+    }
+
+    /** 记录被跳过的可选输入来源, 原因取异常摘要便于排查。 */
+    public void inputSkipped(String name, String reason) {
+        skippedSources.put(name, reason);
     }
 
     public void finished(OutputSpec output, dev.fordes.adfs.format.FinishResult result) {
@@ -137,7 +143,7 @@ public final class ProcessingMetrics {
                 dnsCacheEntries);
         return new ProcessingResult(inputs, semanticRules, opaqueRules, uniqueRules, duplicateRules, allowOverridden,
                 hashEntries, hashCapacity, hashCollisions, dns,
-                snapshots, elapsedMillis, sources, stages);
+                snapshots, elapsedMillis, sources, skippedSources, stages);
     }
 }
 

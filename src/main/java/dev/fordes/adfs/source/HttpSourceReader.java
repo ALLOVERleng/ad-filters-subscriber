@@ -170,7 +170,9 @@ final class HttpSession implements SourceSession {
                     return new HttpSuccess(uri, downloaded);
                 }
                 String body = readErrorBody(connection);
-                boolean retryable = status == 408 || status == 429 || status >= 500;
+                // 404 常见于上游文件重建、镜像同步的瞬时状态(本次 Gitflic 就出现过),
+                // 值得占用 retries 预算重试; 401/403 等鉴权类错误仍然立即失败。
+                boolean retryable = status == 404 || status == 408 || status == 429 || status >= 500;
                 Duration retryAfter = parseRetryAfter(connection.getHeaderField("Retry-After"));
                 connection.disconnect();
                 return new HttpFailure(new InputException("HTTP 输入响应失败: " + name

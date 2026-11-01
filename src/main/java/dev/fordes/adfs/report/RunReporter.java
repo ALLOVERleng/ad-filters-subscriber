@@ -21,11 +21,16 @@ public final class RunReporter {
         }
 
         long parsedRules = Math.addExact(result.semanticRules(), result.opaqueRules());
+        long readInputs = Math.max(0, result.inputs() - result.skipped().size());
         log.info("处理汇总: 读取 {} 个来源、{} 行, 解析 {} 条规则; 保留 {} 条唯一规则, 移除 {} 条重复规则,"
                         + " 剔除 {} 条被白名单覆盖的阻断规则, 跳过 {} 条非法规则",
-                formatCount(result.inputs()), formatCount(inputLines), formatCount(parsedRules),
+                formatCount(readInputs), formatCount(inputLines), formatCount(parsedRules),
                 formatCount(result.uniqueRules()), formatCount(result.duplicateRules()),
                 formatCount(result.allowOverridden()), formatCount(invalidRules));
+        if (!result.skipped().isEmpty()) {
+            log.warn("跳过 {} 个可选来源: {}", formatCount(result.skipped().size()),
+                    String.join(", ", result.skipped().keySet()));
+        }
 
         if (hasDnsMetrics(result.dns())) {
             DnsMetrics dns = result.dns();

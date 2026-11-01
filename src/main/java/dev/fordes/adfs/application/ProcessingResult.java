@@ -22,11 +22,13 @@ public record ProcessingResult(
         Map<Path, OutputMetrics> outputs,
         long elapsedMillis,
         Map<String, InputMetrics> sources,
+        Map<String, String> skipped,
         Map<ProcessingStage, Long> stages) {
 
     public ProcessingResult {
         outputs = Map.copyOf(outputs);
         sources = Map.copyOf(sources);
+        skipped = Map.copyOf(skipped);
         stages = Map.copyOf(stages);
     }
 }

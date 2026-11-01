@@ -78,6 +78,8 @@ AdGuard 客户端（Windows / macOS / Android / iOS 应用与浏览器扩展）�
 | **发布前语法校验** | 产物落盘后再按目标格式复检一遍：AdGuard / DNS 严格校验并剔除非法行，hosts / dnsmasq / SmartDNS / Mihomo 只做空行、控制字符、超长行等通用检查，避免误杀合法的透传行。剔除条数计入运行报告。 |
 | **元素 / URL 规则拆分** | adblock 文本输出默认拆成 `.element.txt` 与 `.url.txt` 两个文件：元素文件只放 cosmetic 规则，`@@` 放行只写入 URL 文件，订阅方可按需取用。 |
 | **站点作用域收敛** | `$domain=` 这类「只在指定站点生效」的规则在 hosts / DNS / dnsmasq / SmartDNS / Mihomo / sing-box 上无法保真，**直接丢弃**。放大成整域规则会让阻断误伤、让放行变成整域放行（例如只对某站点生效的 `@@\|\|raw.githubusercontent.com^$domain=...` 曾被放大成整域放行，抵消了对该域名上万条恶意 URL 的拦截）。 |
+| **可选输入 `optional`** | 给单个上游声明 `optional: true` 后，读取失败只记录「跳过可选来源」并继续处理其余源，不再让一个源的抖动导致整批产物停止更新。当前用于 Gitflic 单点源 `Bypass Paywalls Clean filter`。 |
+| **瞬时 404 重试** | HTTP 读取把 404 也纳入重试预算（`adfs.config.http.retries`，默认 2 次），覆盖上游文件重建、镜像同步的瞬时窗口；401/403 等鉴权类错误仍然立即失败，重试耗尽后照常报错。 |
 | **浏览器产物裁剪** | `easylist` / `ubo` / `abp` 三个输出排除纯域名阻断（`exclude: [dns-domain]`），既避免和 DNS 产物重复，也避免超出 jsDelivr 的单文件体积上限。 |
 | **裸域名规则收紧** | 上游（实测 HyperADRules ads 有 17132 条）会把域名列表直接混进 adblock 文件。`ad.qq.com` 这种裸行在客户端是 **URL 子串匹配**，会连 `weread.qq.com`（结尾恰好是 `ad.qq.com`）一起拦掉。产物统一收紧为 `\|\|ad.qq.com^`，只覆盖该域及其子域；单标签（`ads`）、含通配符 / 路径、以及 `match-case` 规则保持原样，避免锚定后彻底失效。该转换记为 REDUCED，需要 `allow-reduction: true` 才会保留。识别逻辑对所有域名类产物（`dns` / `wildcard` / `hosts` / `dnsmasq` / `mihomo` 等）同样生效，这批裸域名不再按“未支持”丢弃。 |
 | **星号通配语义** | `wildcard.txt` 每行 `*.domain`，`*` 只匹配子域、**不匹配根域名本身**：`||ad.qq.com^` 会写成 `*.ad.qq.com`，而精确主机（`\|domain\|`）写成裸域名行 `domain`。因此根域条目需要由 `dns.txt` / `hosts.txt` 覆盖，这是避免文件体积翻倍的有意取舍。关键词与正则规则无法用单行星号表达，直接丢弃并计入报告。 |

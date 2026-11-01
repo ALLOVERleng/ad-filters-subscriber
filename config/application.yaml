@@ -85,9 +85,11 @@ adfs:
       path: https://filters.adtidy.org/android/filters/3_optimized.txt
       type: adblock
 
+    # Gitflic 单点源, 上游偶发 404(文件重建中), 置为可选避免整批产物停更。
     - name: Bypass Paywalls Clean filter
       path: https://gitflic.ru/project/magnolia1234/bypass-paywalls-clean-filters/blob/raw?file=bpc-paywall-filter.txt
       type: adblock
+      optional: true
 
     - name: DD-AD
       path: https://raw.githubusercontent.com/afwfv/DD-AD/refs/heads/release/easylist.txt

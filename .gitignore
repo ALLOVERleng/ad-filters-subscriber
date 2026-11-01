@@ -31,3 +31,5 @@ target
 build/
 /dist/
 logs/
+
+/.dist.adfs.lock

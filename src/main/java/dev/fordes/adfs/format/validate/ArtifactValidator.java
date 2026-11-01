@@ -108,7 +108,7 @@ public final class ArtifactValidator {
 
     private static boolean strict(OutputSpec spec) {
         return switch (spec.type()) {
-            case ADBLOCK, DNS -> true;
+            case ADBLOCK, DNS, WILDCARD -> true;
             case HOSTS, DNSMASQ, SMARTDNS, MIHOMO, SING_BOX -> false;
         };
     }

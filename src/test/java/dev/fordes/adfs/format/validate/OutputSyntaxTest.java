@@ -86,6 +86,21 @@ final class OutputSyntaxTest {
     }
 
     @Test
+    void wildcardAcceptsAsteriskPrefixAndBareDomainOnly() {
+        SyntaxValidator syntax = validator(RuleType.WILDCARD, RuleDialect.NONE, ContainerFormat.TEXT);
+
+        assertTrue(syntax.isValid("*.ads.example"));
+        assertTrue(syntax.isValid("ads.example"));
+
+        assertFalse(syntax.isValid(""));
+        assertFalse(syntax.isValid("*."));
+        assertFalse(syntax.isValid("*.ads.*.example"));
+        assertFalse(syntax.isValid("ads.*.example"));
+        assertFalse(syntax.isValid("*.ads.example extra"));
+        assertFalse(syntax.isValid("||ads.example^"));
+    }
+
+    @Test
     void mihomoValidatesPerDialect() {
         SyntaxValidator classical = validator(RuleType.MIHOMO, RuleDialect.CLASSICAL, ContainerFormat.YAML);
         assertTrue(classical.isValid("DOMAIN-SUFFIX,ads.example"));

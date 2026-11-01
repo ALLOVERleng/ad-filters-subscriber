@@ -35,6 +35,7 @@ public final class OutputSyntax {
             case DNS -> OutputSyntax::dns;
             case HOSTS -> OutputSyntax::hosts;
             case DNSMASQ -> OutputSyntax::dnsmasq;
+            case WILDCARD -> OutputSyntax::wildcard;
             case SMARTDNS -> OutputSyntax::smartdns;
             case MIHOMO -> switch (spec.dialect()) {
                 case CLASSICAL -> OutputSyntax::mihomoClassical;
@@ -169,6 +170,15 @@ public final class OutputSyntax {
             return false;
         }
         return host(line.substring(prefix.length(), last)) && dnsValue(line.substring(last + 1));
+    }
+
+    static boolean wildcard(String line) {
+        if (blankOrControl(line)) {
+            return false;
+        }
+        // 星号只允许出现在行首作为唯一的通配标签, 其余部分必须是完整域名。
+        String candidate = line.startsWith("*.") ? line.substring(2) : line;
+        return !candidate.isEmpty() && candidate.indexOf('*') < 0 && host(candidate);
     }
 
     static boolean smartdns(String line) {

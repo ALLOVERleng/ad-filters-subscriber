@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Slf4j
@@ -135,12 +136,20 @@ public final class BasicRuleWriter implements RuleWriter {
             return new Unsupported("目标不能表达该 Adblock 规则主体");
         }
         boolean preserveImportant = target.type() == RuleType.DNS;
+        // 裸域名在 AdGuard/uBO 里是 URL 子串匹配, 只有整体就是普通域名时才收紧成域锚。
+        Optional<DomainName> bare = AdblockDomainConversion.bareDomain(rule);
+        String hostText = bare.map(DomainName::value).orElse(rule.pattern().value());
         EncodingResult result = preserveImportant
-                ? encodeDnsAdblockDomain(rule)
-                : encodeDomain(new SuffixDomain(new DomainName(rule.pattern().value())), rule.action());
+                ? encodeDnsAdblockDomain(rule, hostText)
+                : encodeDomain(new SuffixDomain(new DomainName(hostText)), rule.action());
         return switch (result) {
-            case Encoded(String text, ConversionDecision decision, boolean passthrough, RuleEntry effectiveRule) ->
-                    new Encoded(text, AdblockDomainConversion.decide(rule, preserveImportant, decision), passthrough, effectiveRule);
+            case Encoded(String text, ConversionDecision decision, boolean passthrough, RuleEntry effectiveRule) -> {
+                ConversionDecision merged = AdblockDomainConversion.decide(rule, preserveImportant, decision);
+                yield new Encoded(text, bare.isPresent()
+                        ? merged.with(ConversionScope.REDUCED, ConversionLoss.URL_PATTERN_ANCHORED_TO_DOMAIN,
+                                "裸域名规则原本按 URL 子串匹配, 收紧为域锚后不再命中把该域名当子串的其它主机")
+                        : merged, passthrough, effectiveRule);
+            }
             case Unsupported unsupported -> unsupported;
         };
     }
@@ -171,9 +180,9 @@ public final class BasicRuleWriter implements RuleWriter {
         };
     }
 
-    private static EncodingResult encodeDnsAdblockDomain(AdblockNetworkRule rule) {
+    private static EncodingResult encodeDnsAdblockDomain(AdblockNetworkRule rule, String hostText) {
         String text = (rule.action() == RuleAction.ALLOW ? "@@" : "")
-                + "||" + rule.pattern().value() + "^"
+                + "||" + hostText + "^"
                 + (rule.important() ? "$important" : "");
         return new Encoded(text,
                 new ConversionDecision(ConversionScope.EXACT, "DNS/AdGuard 域名规则精确转换"), false, rule);
@@ -184,9 +193,47 @@ public final class BasicRuleWriter implements RuleWriter {
             case HOSTS -> encodeHostsDomain(pattern, action);
             case DNS -> encodeDnsDomain(pattern, action);
             case DNSMASQ -> encodeDnsmasqDomain(pattern, action);
+            case WILDCARD -> encodeWildcardDomain(pattern, action);
             case MIHOMO -> encodeMihomoDomain(pattern, action);
             case ADBLOCK, SING_BOX, SMARTDNS -> new Unsupported("目标格式尚未在基础 Writer 中实现");
         };
+    }
+
+    /**
+     * 星号通配格式: 每行 {@code *.domain} 覆盖该域名的所有子域, 裸域名行只覆盖根域本身。
+     *
+     * <p>{@code *} 的通配符只作用于域名段, 不包含根域名, 所以精确主机写成裸域名行,
+     * 后缀域名写成 {@code *.domain} 并由 {@link ConversionLoss#SUFFIX_ROOT_NOT_COVERED} 记录
+     * 根域不再被拦截; 关键词与正则无法用单行星号表达, 直接丢弃。</p>
+     */
+    private static EncodingResult encodeWildcardDomain(DomainPattern pattern, RuleAction action) {
+        if (action == RuleAction.ALLOW) {
+            return new Unsupported("星号通配规则集不能表达允许规则");
+        }
+        return switch (pattern) {
+            case ExactDomain exact -> new Encoded(exact.value(),
+                    new ConversionDecision(ConversionScope.EXACT, "星号通配用裸域名表达精确主机"), false,
+                    new DomainRule(pattern, action));
+            case Subdomain subdomain -> new Encoded("*." + subdomain.value(),
+                    new ConversionDecision(ConversionScope.EXACT, "星号通配只匹配子域, 与 Subdomain 语义一致"), false,
+                    new DomainRule(pattern, action));
+            case SuffixDomain suffix -> new Encoded("*." + suffix.value(),
+                    new ConversionDecision(ConversionScope.REDUCED, Set.of(ConversionLoss.SUFFIX_ROOT_NOT_COVERED),
+                            "星号通配只匹配子域, 根域名本身不再被拦截"),
+                    false, new DomainRule(pattern, action));
+            case WildcardDomain wildcard -> encodeAsteriskWildcard(wildcard, action);
+            case KeywordDomain _, RegexDomain _ -> new Unsupported("星号通配不能表达关键词或正则规则");
+        };
+    }
+
+    private static EncodingResult encodeAsteriskWildcard(WildcardDomain wildcard, RuleAction action) {
+        String value = wildcard.value();
+        if (!value.startsWith("*.") || value.indexOf('*', 1) >= 0) {
+            return new Unsupported("星号通配只能表达 *. 开头的单星号域名");
+        }
+        return new Encoded(value,
+                new ConversionDecision(ConversionScope.EXACT, "星号通配域名原样保留"), false,
+                new DomainRule(wildcard, action));
     }
 
     private static EncodingResult encodeHostsDomain(DomainPattern pattern, RuleAction action) {
@@ -317,7 +364,7 @@ public final class BasicRuleWriter implements RuleWriter {
                             Set.of(ConversionLoss.HOST_MAPPING_EXPANDED_TO_SUBDOMAINS),
                             "Dnsmasq address 同时覆盖子域"), false,
                     new DomainRule(new SuffixDomain(hostname), RuleAction.BLOCK));
-            case MIHOMO, ADBLOCK, SING_BOX, SMARTDNS -> new Unsupported("目标不能表达地址映射");
+            case MIHOMO, ADBLOCK, SING_BOX, SMARTDNS, WILDCARD -> new Unsupported("目标不能表达地址映射");
         };
     }
 

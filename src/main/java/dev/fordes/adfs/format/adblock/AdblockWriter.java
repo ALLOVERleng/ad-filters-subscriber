@@ -9,6 +9,7 @@ import dev.fordes.adfs.format.FinishResult;
 import dev.fordes.adfs.format.OutputRuleProcessor;
 import dev.fordes.adfs.format.RuleWriter;
 import dev.fordes.adfs.format.WriteResult;
+import dev.fordes.adfs.format.conversion.AdblockDomainConversion;
 import dev.fordes.adfs.format.conversion.DedupMode;
 import dev.fordes.adfs.format.conversion.ProjectedRule;
 import dev.fordes.adfs.format.validate.OutputSyntax;
@@ -168,15 +169,17 @@ public final class AdblockWriter implements RuleWriter {
                 return Optional.empty();
             }
         }
+        // 裸域名在 AdGuard / uBO 里都是 URL 子串匹配: `ad.qq.com` 会连 `weread.qq.com` 一起拦掉。
+        // 上游(实测 HyperADRules ads 有 1.7 万条)大量提供这种形态, 这里统一收紧成域锚。
+        Optional<DomainName> anchored = AdblockDomainConversion.bareDomain(rule);
         StringBuilder text = new StringBuilder();
         if (rule.action() == RuleAction.ALLOW) {
             text.append("@@");
         }
         text.append(switch (rule.pattern().kind()) {
             case DOMAIN_ANCHOR -> "||" + rule.pattern().value() + "^";
-            case URL -> target.dialect() == RuleDialect.UBO && rule.dialect() != RuleDialect.UBO
-                    && DomainName.tryParse(rule.pattern().value()).isPresent()
-                            ? rule.pattern().value() + "*" : rule.pattern().value();
+            case URL -> anchored.map(domain -> "||" + domain.value() + "^")
+                    .orElse(rule.pattern().value());
             case REGEX -> "/" + rule.pattern().value() + "/";
         });
         List<String> options = new ArrayList<>();
@@ -203,7 +206,15 @@ public final class AdblockWriter implements RuleWriter {
         if (!options.isEmpty()) {
             text.append('$').append(String.join(",", options));
         }
-        return Optional.of(new Encoding(text.toString(), false, rule, exact("Adblock 网络规则精确转换")));
+        RuleEntry effective = anchored
+                .<RuleEntry>map(domain -> new DomainRule(new SuffixDomain(domain), rule.action()))
+                .orElse(rule);
+        ConversionDecision decision = anchored.isPresent()
+                ? new ConversionDecision(ConversionScope.REDUCED,
+                        Set.of(ConversionLoss.URL_PATTERN_ANCHORED_TO_DOMAIN),
+                        "裸域名规则原本按 URL 子串匹配, 收紧为域锚后不再命中把该域名当子串的其它主机")
+                : exact("Adblock 网络规则精确转换");
+        return Optional.of(new Encoding(text.toString(), false, effective, decision));
     }
 
     @Override

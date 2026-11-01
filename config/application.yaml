@@ -197,6 +197,11 @@ adfs:
     - name: dnsmasq.txt
       type: dnsmasq
 
+    # 星号通配: 每行 `*.domain` 覆盖该域名的全部子域, 精确主机写成裸域名行。
+    # `*` 不匹配根域名本身, 根域拦截请配合 dns.txt / hosts.txt 使用。
+    - name: wildcard.txt
+      type: wildcard
+
     - name: smartdns.txt
       type: smartdns
 

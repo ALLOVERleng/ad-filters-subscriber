@@ -85,6 +85,65 @@ final class ProcessingPipelineTest {
     }
 
     @Test
+    void rendersAsteriskWildcardForSuffixAndBareDomainForExactHost() throws IOException {
+        Path input = temporaryDirectory.resolve("wildcard.dns");
+        Files.writeString(input, "||suffix.example^\nexact.example\n", StandardCharsets.UTF_8);
+        Path outputDir = temporaryDirectory.resolve("wildcard-output");
+        EffectiveConfig base = TestConfigs.create(input, RuleType.DNS, RuleDialect.ADGUARD, outputDir,
+                List.of(TestConfigs.textOutput("wildcard.txt", RuleType.WILDCARD, RuleDialect.NONE)), false);
+        EffectiveConfig config = new EffectiveConfig(base.outputDir(), base.inputLimits(), base.http(), base.rules(),
+                new ConversionConfig(true, true), base.dns(), base.inputs(), base.outputs());
+
+        pipeline().process(config);
+
+        // 后缀域名写成 *.domain (只覆盖子域), 精确主机写成裸域名行 (只覆盖根域)。
+        assertEquals("*.suffix.example\nexact.example\n",
+                Files.readString(outputDir.resolve("wildcard.txt")));
+    }
+
+    @Test
+    void anchorsBareDomainRulesToAvoidSubstringFalsePositives() throws IOException {
+        Path input = temporaryDirectory.resolve("bare-adblock.txt");
+        Files.writeString(input, """
+                ad.qq.com
+                ads
+                ad.qanda.ai/*?ads=1
+                ||keep.example^
+                @@weread.qq.com
+                """, StandardCharsets.UTF_8);
+        Path outputDir = temporaryDirectory.resolve("bare-output");
+        EffectiveConfig base = TestConfigs.create(input, RuleType.ADBLOCK, RuleDialect.ADGUARD, outputDir,
+                List.of(TestConfigs.textOutput("easylist.txt", RuleType.ADBLOCK, RuleDialect.ADGUARD),
+                        TestConfigs.textOutput("dns.txt", RuleType.DNS, RuleDialect.ADGUARD),
+                        TestConfigs.textOutput("wildcard.txt", RuleType.WILDCARD, RuleDialect.NONE)), false);
+        EffectiveConfig config = new EffectiveConfig(base.outputDir(), base.inputLimits(), base.http(), base.rules(),
+                new ConversionConfig(true, true), base.dns(), base.inputs(), base.outputs());
+
+        pipeline().process(config);
+
+        List<String> lines = Files.readAllLines(outputDir.resolve("easylist.txt"));
+        // 裸域名按 URL 子串匹配会把 weread.qq.com 一起拦掉, 必须收紧成域锚。
+        assertTrue(lines.contains("||ad.qq.com^"));
+        assertFalse(lines.contains("ad.qq.com"));
+        assertTrue(lines.contains("||keep.example^"));
+        // 放行规则同样收紧, 避免 @@ad.qq.com 这种过宽放行。
+        assertTrue(lines.contains("@@||weread.qq.com^"));
+        // 单标签与带路径的值不是域名, 锚定会让规则彻底失效, 保持原样。
+        assertTrue(lines.contains("ads"));
+        assertTrue(lines.contains("ad.qanda.ai/*?ads=1"));
+
+        // 域名类目标同样能吃到这批裸域名, 而不是按“未支持”丢弃。
+        List<String> dns = Files.readAllLines(outputDir.resolve("dns.txt"));
+        assertTrue(dns.contains("||ad.qq.com^"));
+        assertTrue(dns.contains("@@||weread.qq.com^"));
+        assertFalse(dns.contains("ads"));
+
+        List<String> wildcard = Files.readAllLines(outputDir.resolve("wildcard.txt"));
+        assertTrue(wildcard.contains("*.ad.qq.com"));
+        assertFalse(wildcard.contains("ads"));
+    }
+
+    @Test
     void guaranteesWhitelistAcrossExceptionAndRemovalTargets() throws IOException {
         Path input = temporaryDirectory.resolve("hosts.txt");
         Files.writeString(input, "0.0.0.0 white.example\n0.0.0.0 blocked.example\n", StandardCharsets.UTF_8);

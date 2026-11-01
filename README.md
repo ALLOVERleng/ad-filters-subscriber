@@ -39,6 +39,7 @@ dnsmasq、SmartDNS、Mihomo（Clash）与 sing-box。
 | `dns.txt`              | AdGuard DNS 过滤规则 | [link][dns-raw] | [link][dns-ghproxy] | [link][dns-jsdelivr] |
 | `hosts.txt`            | hosts 格式规则 | [link][hosts-raw] | [link][hosts-ghproxy] | [link][hosts-jsdelivr] |
 | `dnsmasq.txt`          | dnsmasq 格式规则 | [link][dnsmasq-raw] | [link][dnsmasq-ghproxy] | [link][dnsmasq-jsdelivr] |
+| `wildcard.txt`         | 星号通配规则（`*.domain`） | [link][wildcard-raw] | [link][wildcard-ghproxy] | [link][wildcard-jsdelivr] |
 | `smartdns.txt`         | SmartDNS 格式规则 | [link][smartdns-raw] | [link][smartdns-ghproxy] | [link][smartdns-jsdelivr] |
 | `clash.yaml`           | Mihomo 域名规则集（YAML） | [link][clash-raw] | [link][clash-ghproxy] | [link][clash-jsdelivr] |
 | `sing-box.json`        | sing-box 规则集（JSON） | [link][sing-box-raw] | [link][sing-box-ghproxy] | [link][sing-box-jsdelivr] |
@@ -57,6 +58,7 @@ AdGuard 客户端（Windows / macOS / Android / iOS 应用与浏览器扩展）�
 | AdGuard Home（域名级拦截） | `dns.txt` | 只有域名维度，粒度比 `easylist` 粗 |
 | Pi-hole / 路由器 hosts 方案 | `hosts.txt` | 域名级，兼容性最好 |
 | dnsmasq | `dnsmasq.txt` | 原生 `address=/domain/` 语法 |
+| Blocky / Technitium 等星号通配方案 | `wildcard.txt` | 每行 `*.domain`；只覆盖子域，根域需另写裸域名 |
 | SmartDNS | `smartdns.txt` | 原生 `address /domain/#` 语法 |
 | Mihomo / Clash.Meta | `clash.yaml` | 域名规则集（YAML） |
 | sing-box | `sing-box.json` | 规则集（JSON） |
@@ -77,6 +79,8 @@ AdGuard 客户端（Windows / macOS / Android / iOS 应用与浏览器扩展）�
 | **元素 / URL 规则拆分** | adblock 文本输出默认拆成 `.element.txt` 与 `.url.txt` 两个文件：元素文件只放 cosmetic 规则，`@@` 放行只写入 URL 文件，订阅方可按需取用。 |
 | **站点作用域收敛** | `$domain=` 这类「只在指定站点生效」的规则在 hosts / DNS / dnsmasq / SmartDNS / Mihomo / sing-box 上无法保真，**直接丢弃**。放大成整域规则会让阻断误伤、让放行变成整域放行（例如只对某站点生效的 `@@\|\|raw.githubusercontent.com^$domain=...` 曾被放大成整域放行，抵消了对该域名上万条恶意 URL 的拦截）。 |
 | **浏览器产物裁剪** | `easylist` / `ubo` / `abp` 三个输出排除纯域名阻断（`exclude: [dns-domain]`），既避免和 DNS 产物重复，也避免超出 jsDelivr 的单文件体积上限。 |
+| **裸域名规则收紧** | 上游（实测 HyperADRules ads 有 17132 条）会把域名列表直接混进 adblock 文件。`ad.qq.com` 这种裸行在客户端是 **URL 子串匹配**，会连 `weread.qq.com`（结尾恰好是 `ad.qq.com`）一起拦掉。产物统一收紧为 `\|\|ad.qq.com^`，只覆盖该域及其子域；单标签（`ads`）、含通配符 / 路径、以及 `match-case` 规则保持原样，避免锚定后彻底失效。该转换记为 REDUCED，需要 `allow-reduction: true` 才会保留。识别逻辑对所有域名类产物（`dns` / `wildcard` / `hosts` / `dnsmasq` / `mihomo` 等）同样生效，这批裸域名不再按“未支持”丢弃。 |
+| **星号通配语义** | `wildcard.txt` 每行 `*.domain`，`*` 只匹配子域、**不匹配根域名本身**：`||ad.qq.com^` 会写成 `*.ad.qq.com`，而精确主机（`\|domain\|`）写成裸域名行 `domain`。因此根域条目需要由 `dns.txt` / `hosts.txt` 覆盖，这是避免文件体积翻倍的有意取舍。关键词与正则规则无法用单行星号表达，直接丢弃并计入报告。 |
 
 ## 生成方式
 
@@ -181,6 +185,9 @@ GitHub Actions（`auto-update.yml`）按计划执行同样的流程，把产物�
 [dnsmasq-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/dnsmasq.txt
 [dnsmasq-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/dnsmasq.txt
 [dnsmasq-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@release/dnsmasq.txt
+[wildcard-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/wildcard.txt
+[wildcard-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/wildcard.txt
+[wildcard-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@release/wildcard.txt
 [smartdns-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/smartdns.txt
 [smartdns-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/smartdns.txt
 [smartdns-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@release/smartdns.txt

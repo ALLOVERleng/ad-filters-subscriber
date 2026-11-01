@@ -9,6 +9,7 @@ public enum RuleType {
     DNS("dns"),
     HOSTS("hosts"),
     DNSMASQ("dnsmasq"),
+    WILDCARD("wildcard"),
     MIHOMO("mihomo"),
     SING_BOX("sing-box"),
     SMARTDNS("smartdns");

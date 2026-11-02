@@ -216,6 +216,11 @@ adfs:
       type: sing-box
       container: json
 
+    # Quantumult X 分流: 每行 `类型, 匹配值, reject`, 类型为 host / host-suffix / host-keyword。
+    # 分流规则没有「放行」语义(direct 会把流量摘出代理), @@ 放行与站点作用域规则在转换阶段丢弃。
+    - name: quantumult-x.conf
+      type: quantumult-x
+
 
   config:
     file_header: |

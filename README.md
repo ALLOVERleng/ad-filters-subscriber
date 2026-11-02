@@ -7,8 +7,8 @@
 
 本仓库是 [fordes123/ad-filters-subscriber](https://github.com/fordes123/ad-filters-subscriber) 的一个**规则订阅实例**：
 GitHub Actions 每 8 小时拉取 **36 个远程上游 + 1 个本地补充列表**，经解析、归一化、去重、格式转换与发布前语法校验，
-产出 **13 个可直接订阅的规则文件**，覆盖 AdGuard、uBlock Origin、Adblock Plus、AdGuard DNS、hosts、dnsmasq、
-星号通配、SmartDNS、Mihomo（Clash）与 sing-box。
+产出 **14 个可直接订阅的规则文件**，覆盖 AdGuard、uBlock Origin、Adblock Plus、AdGuard DNS、hosts、dnsmasq、
+星号通配、SmartDNS、Mihomo（Clash）、sing-box 与 Quantumult X 分流。
 
 产物只发布到 `release` 分支，`main` 分支只保留生成器与配置，**不手工编辑产物**。
 
@@ -47,6 +47,7 @@ GitHub Actions 每 8 小时拉取 **36 个远程上游 + 1 个本地补充列表
 | `smartdns.txt`         | SmartDNS | `address /domain/#` | [link][smartdns-raw] | [link][smartdns-ghproxy] | [link][smartdns-jsdelivr] |
 | `clash.yaml`           | Mihomo | 域名规则集（YAML `payload` 列表） | [link][clash-raw] | [link][clash-ghproxy] | [link][clash-jsdelivr] |
 | `sing-box.json`        | sing-box | 规则集（JSON） | [link][sing-box-raw] | [link][sing-box-ghproxy] | [link][sing-box-jsdelivr] |
+| `quantumult-x.conf`    | Quantumult X | 分流规则 `host\|host-suffix\|host-keyword, 值, reject` | [link][quantumultx-raw] | [link][quantumultx-ghproxy] | [link][quantumultx-jsdelivr] |
 
 ### 选择哪一份
 
@@ -66,9 +67,10 @@ GitHub Actions 每 8 小时拉取 **36 个远程上游 + 1 个本地补充列表
 | SmartDNS | `smartdns.txt` | 原生 `address /domain/#` 语法 |
 | Mihomo / Clash.Meta | `clash.yaml` | 域名规则集（YAML） |
 | sing-box | `sing-box.json` | 规则集（JSON） |
+| **Quantumult X** | `quantumult-x.conf` | 分流规则，每行 `类型, 匹配值, reject`；只有「拒绝 / 直连 / 代理」，没有放行写法 |
 
 > [!NOTE]
-> 已经是域名级方案（AdGuard Home、Pi-hole、dnsmasq、SmartDNS、Mihomo、sing-box）时，**只订一份对应的域名列表**即可，
+> 已经是域名级方案（AdGuard Home、Pi-hole、dnsmasq、SmartDNS、Mihomo、sing-box、Quantumult X）时，**只订一份对应的域名列表**即可，
 > 再叠加其它域名列表只会增加重复规则。浏览器方案同理，`ubo.*` 与 `abp.*` 不要和 `easylist.*` 同时订阅。
 
 ### 关于体积与粒度
@@ -113,6 +115,7 @@ HTTP(S) 拉取 → 解析 → 归一化 → 源级 exclude → 去重 / 白名�
 | **发布前语法校验** | 见上一步：严格校验的格式剔除非法行，其余只做通用检查，避免误杀合法的透传行。 |
 | **元素 / URL 规则拆分** | adblock 文本输出默认拆成 `.element.txt` 与 `.url.txt`：元素文件只放 cosmetic 规则，`@@` 放行只写入 URL 文件，订阅方可按需取用；`split: false` 可退回单文件。 |
 | **站点作用域收敛** | `$domain=` 这类「只在指定站点生效」的规则在 hosts / DNS / dnsmasq / SmartDNS / Mihomo / sing-box 上无法保真，**直接丢弃**。放大成整域规则会让阻断误伤、让放行变成整域放行（例如只对某站点生效的 `@@\|\|raw.githubusercontent.com^$domain=...` 曾被放大成整域放行，抵消了对该域名上万条恶意 URL 的拦截）。 |
+| **分流规则的策略语义** | Quantumult X 分流的 `direct` 表示**直连**，不是「不拦截」：写成 `direct` 会把对应流量从代理里摘出去，改变订阅方的分流结果。因此 `@@` 放行、白名单域名只做减法（剔除阻断行），绝不写成 `direct`；`$domain=` 站点作用域与正则域名没有对应写法，同样直接丢弃。`hosts` 里的地址映射（`1.2.3.4 x`）也无法用分流表达，一并丢弃。 |
 | **可选输入 `optional`** | 给单个上游声明 `optional: true` 后，读取失败只记录「跳过可选来源」并继续处理其余源，不再让一个源的抖动导致整批产物停止更新。默认关闭以保持严格失败语义，当前用于 Gitflic 单点源 `Bypass Paywalls Clean filter`。 |
 | **浏览器产物裁剪** | `easylist` / `ubo` / `abp` 排除纯域名阻断（`exclude: [dns-domain]`），既避免和 DNS 产物重复，也避免超出 jsDelivr 的单文件体积上限。 |
 | **裸域名规则收紧** | 上游（实测 HyperADRules ads 有 17132 条）会把域名列表直接混进 adblock 文件。`ad.qq.com` 这种裸行在客户端是 **URL 子串匹配**，会连 `weread.qq.com`（结尾恰好是 `ad.qq.com`）一起拦掉。产物统一收紧为 `\|\|ad.qq.com^`，只覆盖该域及其子域；单标签（`ads`）、含通配符 / 路径、以及 `match-case` 规则保持原样，避免锚定后彻底失效。该转换记为 REDUCED，需要 `allow-reduction: true` 才会保留。识别逻辑对所有域名类产物（`dns` / `wildcard` / `hosts` / `dnsmasq` / `mihomo` 等）同样生效。 |
@@ -143,7 +146,7 @@ java -jar build/libs/adfs-*-all.jar -c config/application.yaml
 
 | 路径 | 内容 |
 |:-----|:-----|
-| `dist/` | 本轮产物（13 个规则文件，带文件头） |
+| `dist/` | 本轮产物（14 个规则文件，带文件头） |
 | `logs/adfs.log` | 运行日志，按天滚动保留 30 天 |
 | `.dist.adfs.lock` | 运行锁，防止并发写同一输出目录 |
 | `rules-src/private.txt` | 本地补充规则，作为输入参与合并 |
@@ -313,3 +316,6 @@ java -jar build/libs/adfs-*-all.jar -c config/application.yaml
 [sing-box-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/sing-box.json
 [sing-box-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/sing-box.json
 [sing-box-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@release/sing-box.json
+[quantumultx-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/quantumult-x.conf
+[quantumultx-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/quantumult-x.conf
+[quantumultx-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@release/quantumult-x.conf

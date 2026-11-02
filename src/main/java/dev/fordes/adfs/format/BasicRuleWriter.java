@@ -194,6 +194,7 @@ public final class BasicRuleWriter implements RuleWriter {
             case DNS -> encodeDnsDomain(pattern, action);
             case DNSMASQ -> encodeDnsmasqDomain(pattern, action);
             case WILDCARD -> encodeWildcardDomain(pattern, action);
+            case QUANTUMULT_X -> encodeQuantumultXDomain(pattern, action);
             case MIHOMO -> encodeMihomoDomain(pattern, action);
             case ADBLOCK, SING_BOX, SMARTDNS -> new Unsupported("目标格式尚未在基础 Writer 中实现");
         };
@@ -234,6 +235,50 @@ public final class BasicRuleWriter implements RuleWriter {
         return new Encoded(value,
                 new ConversionDecision(ConversionScope.EXACT, "星号通配域名原样保留"), false,
                 new DomainRule(wildcard, action));
+    }
+
+    /**
+     * Quantumult X 分流规则: {@code host} 精确主机、{@code host-suffix} 域名及其子域、
+     * {@code host-keyword} 主机名关键词, 策略固定写 {@code reject}。
+     *
+     * <p>分流规则只有「拒绝 / 直连 / 代理」三种去向, 没有「放行」语义: {@code direct} 是把流量从代理里
+     * 摘出去, 写进广告列表会改变订阅方的分流结果, 因此放行规则一律丢弃。{@code *} 通配与严格子域没有
+     * 对应写法, 只能落到 {@code host-suffix}, 根域名随之被一起拦截, 记 EXPANDED。</p>
+     */
+    private static EncodingResult encodeQuantumultXDomain(DomainPattern pattern, RuleAction action) {
+        if (action == RuleAction.ALLOW) {
+            return new Unsupported("Quantumult X 分流规则只能表达阻断, 不能表达放行");
+        }
+        return switch (pattern) {
+            case ExactDomain exact -> new Encoded("host, " + exact.value() + ", reject",
+                    new ConversionDecision(ConversionScope.EXACT, "Quantumult X host 与精确主机一一对应"),
+                    false, new DomainRule(pattern, action));
+            case SuffixDomain suffix -> new Encoded("host-suffix, " + suffix.value() + ", reject",
+                    new ConversionDecision(ConversionScope.EXACT, "Quantumult X host-suffix 覆盖域名及其子域"),
+                    false, new DomainRule(pattern, action));
+            case Subdomain subdomain -> new Encoded("host-suffix, " + subdomain.value() + ", reject",
+                    new ConversionDecision(ConversionScope.EXPANDED,
+                            Set.of(ConversionLoss.ROOT_EXPANDED_TO_SUBDOMAINS),
+                            "Quantumult X 无严格子域写法, host-suffix 连根域名一起拦截"),
+                    false, new DomainRule(pattern, action));
+            case KeywordDomain keyword -> new Encoded("host-keyword, " + keyword.value() + ", reject",
+                    new ConversionDecision(ConversionScope.EXACT, "Quantumult X host-keyword 匹配主机名关键词"),
+                    false, new DomainRule(pattern, action));
+            case WildcardDomain wildcard -> encodeQuantumultXWildcard(wildcard, action);
+            case RegexDomain _ -> new Unsupported("Quantumult X 分流规则不能表达正则域名");
+        };
+    }
+
+    private static EncodingResult encodeQuantumultXWildcard(WildcardDomain wildcard, RuleAction action) {
+        String value = wildcard.value();
+        if (!value.startsWith("*.") || value.indexOf('*', 1) >= 0) {
+            return new Unsupported("Quantumult X host-suffix 只能表达 *. 前缀的单星号通配");
+        }
+        return new Encoded("host-suffix, " + value.substring(2) + ", reject",
+                new ConversionDecision(ConversionScope.EXPANDED,
+                        Set.of(ConversionLoss.ROOT_EXPANDED_TO_SUBDOMAINS),
+                        "Quantumult X host-suffix 同时命中根域名, 范围比 *. 通配更大"),
+                false, new DomainRule(wildcard, action));
     }
 
     private static EncodingResult encodeHostsDomain(DomainPattern pattern, RuleAction action) {
@@ -364,16 +409,24 @@ public final class BasicRuleWriter implements RuleWriter {
                             Set.of(ConversionLoss.HOST_MAPPING_EXPANDED_TO_SUBDOMAINS),
                             "Dnsmasq address 同时覆盖子域"), false,
                     new DomainRule(new SuffixDomain(hostname), RuleAction.BLOCK));
-            case MIHOMO, ADBLOCK, SING_BOX, SMARTDNS, WILDCARD -> new Unsupported("目标不能表达地址映射");
+            case MIHOMO, ADBLOCK, SING_BOX, SMARTDNS, WILDCARD, QUANTUMULT_X -> new Unsupported("目标不能表达地址映射");
         };
     }
 
     private EncodingResult encodeIpCidr(IpAddress network, int prefixLength, RuleAction action) {
-        if (target.type() != RuleType.MIHOMO || target.dialect() == RuleDialect.DOMAIN
-                || action == RuleAction.ALLOW) {
+        if (action == RuleAction.ALLOW) {
             return new Unsupported("目标不能表达 IP/CIDR 阻断集合");
         }
         String cidr = new IpCidr(network, prefixLength).text();
+        if (target.type() == RuleType.QUANTUMULT_X) {
+            String type = network.family() == IpFamily.IPV4 ? "ip-cidr" : "ip6-cidr";
+            return new Encoded(type + ", " + cidr + ", reject",
+                    new ConversionDecision(ConversionScope.EXACT, "Quantumult X IP 网段与策略一一对应"),
+                    false, new IpCidrRule(network, prefixLength, action));
+        }
+        if (target.type() != RuleType.MIHOMO || target.dialect() == RuleDialect.DOMAIN) {
+            return new Unsupported("目标不能表达 IP/CIDR 阻断集合");
+        }
         String text = target.dialect() == RuleDialect.CLASSICAL
                 ? (network.family() == IpFamily.IPV4 ? "IP-CIDR," : "IP-CIDR6,") + cidr
                 : cidr;

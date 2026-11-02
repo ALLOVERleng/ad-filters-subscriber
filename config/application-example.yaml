@@ -2,7 +2,7 @@
 # 输入、输出的相对路径均以当前工作目录为基准。
 adfs:
   # 名称必须唯一；name、path、type 均为必填字段。
-  # 格式：adblock、dns、hosts、dnsmasq、smartdns、mihomo、sing-box。
+  # 格式：adblock、dns、hosts、dnsmasq、wildcard、smartdns、mihomo、sing-box、quantumult-x。
   input:
     - name: upstream
       path: https://example.org/filter.txt
@@ -51,6 +51,9 @@ adfs:
     - name: dnsmasq.txt
       type: dnsmasq
 
+    - name: wildcard.txt
+      type: wildcard  # 每行 *.domain 覆盖子域、精确主机写裸域名行；单向渲染，只能作为输出。
+
     - name: smartdns.txt
       type: smartdns
 
@@ -62,6 +65,11 @@ adfs:
     - name: sing-box.json
       type: sing-box
       container: json  # sing-box 仅支持 JSON；其余非 Mihomo 格式仅支持 text。
+
+    # Quantumult X 分流规则：`host|host-suffix|host-keyword|ip-cidr|ip6-cidr, 匹配值, reject`。
+    # 分流没有「放行」语义，@@ 放行、站点作用域与正则域名在转换阶段丢弃；只能作为输出。
+    - name: quantumult-x.conf
+      type: quantumult-x
 
   # 以下运行选项均可省略，所示数值为默认值。
   config:

@@ -27,7 +27,7 @@ public final class OutputHeader {
         }
         String prefix = switch (spec.type()) {
             case ADBLOCK, DNS -> "! ";
-            case HOSTS, DNSMASQ, WILDCARD, SMARTDNS, MIHOMO -> "# ";
+            case HOSTS, DNSMASQ, WILDCARD, QUANTUMULT_X, SMARTDNS, MIHOMO -> "# ";
             case SING_BOX -> throw new OutputException("JSON 输出不支持文件头: " + spec.path());
         };
         String header = FileHeaderTemplate.render(spec, generatedAt, total).lines()

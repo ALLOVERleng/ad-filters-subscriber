@@ -101,6 +101,28 @@ final class OutputSyntaxTest {
     }
 
     @Test
+    void quantumultXAcceptsFilterTriplesAndRejectsMalformedOnes() {
+        SyntaxValidator syntax = validator(RuleType.QUANTUMULT_X, RuleDialect.NONE, ContainerFormat.TEXT);
+
+        assertTrue(syntax.isValid("host, ads.example, reject"));
+        assertTrue(syntax.isValid("host-suffix, ads.example, reject"));
+        assertTrue(syntax.isValid("host-keyword, adserver, reject"));
+        assertTrue(syntax.isValid("ip-cidr, 203.0.113.0/24, reject"));
+        assertTrue(syntax.isValid("ip6-cidr, 2001:db8::/32, reject"));
+
+        assertFalse(syntax.isValid(""));
+        assertFalse(syntax.isValid("ads.example"));
+        assertFalse(syntax.isValid("host, ads.example"));
+        assertFalse(syntax.isValid("host, , reject"));
+        assertFalse(syntax.isValid("host, ads.example, "));
+        assertFalse(syntax.isValid("hostsuffix, ads.example, reject"));
+        assertFalse(syntax.isValid("ip-cidr, 2001:db8::/32, reject"));
+        assertFalse(syntax.isValid("ip6-cidr, 203.0.113.0/24, reject"));
+        assertFalse(syntax.isValid("ip-cidr, 203.0.113.0/64, reject"));
+        assertFalse(syntax.isValid("host-suffix, ads.example, reject, extra"));
+    }
+
+    @Test
     void mihomoValidatesPerDialect() {
         SyntaxValidator classical = validator(RuleType.MIHOMO, RuleDialect.CLASSICAL, ContainerFormat.YAML);
         assertTrue(classical.isValid("DOMAIN-SUFFIX,ads.example"));

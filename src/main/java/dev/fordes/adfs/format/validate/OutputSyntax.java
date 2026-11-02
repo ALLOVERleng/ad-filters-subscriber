@@ -8,6 +8,7 @@ import dev.fordes.adfs.error.RuleProcessingException;
 import dev.fordes.adfs.format.SyntaxValidator;
 import dev.fordes.adfs.format.adblock.AdblockSyntax;
 import dev.fordes.adfs.rule.model.IpAddress;
+import dev.fordes.adfs.rule.model.IpFamily;
 
 /**
  * 按输出格式提供的行级语法校验。
@@ -36,6 +37,7 @@ public final class OutputSyntax {
             case HOSTS -> OutputSyntax::hosts;
             case DNSMASQ -> OutputSyntax::dnsmasq;
             case WILDCARD -> OutputSyntax::wildcard;
+            case QUANTUMULT_X -> OutputSyntax::quantumultX;
             case SMARTDNS -> OutputSyntax::smartdns;
             case MIHOMO -> switch (spec.dialect()) {
                 case CLASSICAL -> OutputSyntax::mihomoClassical;
@@ -194,6 +196,53 @@ public final class OutputSyntax {
             return false;
         }
         return selector(line.substring(prefix.length(), last)) && dnsValue(line.substring(last + 1));
+    }
+
+    /**
+     * Quantumult X 分流规则: 每行 {@code 类型, 匹配值, 策略}。
+     *
+     * <p>只接受本仓库 Writer 会写出的形态: 类型限定为 {@code host} / {@code host-suffix} /
+     * {@code host-keyword} / {@code ip-cidr} / {@code ip6-cidr}, 匹配值按类型分别校验主机名、关键词与
+     * 网段, 策略字段不得为空。段数不对、类型拼错或网段与类型不匹配（如 IPv6 写进 {@code ip-cidr}）
+     * 的行都会被判为不合规。</p>
+     */
+    static boolean quantumultX(String line) {
+        if (blankOrControl(line)) {
+            return false;
+        }
+        String[] parts = line.split(",", -1);
+        if (parts.length != 3) {
+            return false;
+        }
+        String type = parts[0].strip();
+        String value = parts[1].strip();
+        String policy = parts[2].strip();
+        if (policy.isEmpty()) {
+            return false;
+        }
+        return switch (type) {
+            case "host", "host-suffix" -> host(value);
+            case "host-keyword" -> !value.isEmpty();
+            case "ip-cidr" -> cidr(value, IpFamily.IPV4);
+            case "ip6-cidr" -> cidr(value, IpFamily.IPV6);
+            default -> false;
+        };
+    }
+
+    private static boolean cidr(String value, IpFamily family) {
+        int separator = value.lastIndexOf('/');
+        if (separator <= 0 || separator == value.length() - 1) {
+            return false;
+        }
+        try {
+            if (IpAddress.parse(value.substring(0, separator)).family() != family) {
+                return false;
+            }
+            int prefix = Integer.parseInt(value.substring(separator + 1));
+            return prefix >= 0 && prefix <= (family == IpFamily.IPV6 ? 128 : 32);
+        } catch (RuleProcessingException | NumberFormatException exception) {
+            return false;
+        }
     }
 
     static boolean mihomoClassical(String line) {

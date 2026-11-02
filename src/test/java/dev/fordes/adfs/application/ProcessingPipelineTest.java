@@ -104,6 +104,30 @@ final class ProcessingPipelineTest {
     }
 
     @Test
+    void rendersQuantumultXDiversionRulesWithRejectPolicy() throws IOException {
+        Path input = temporaryDirectory.resolve("quantumultx.list");
+        Files.writeString(input, """
+                DOMAIN-KEYWORD,adserver
+                IP-CIDR,10.0.0.0/8
+                DOMAIN-SUFFIX,suffix.example
+                DOMAIN,exact.example
+                """, StandardCharsets.UTF_8);
+        Path outputDir = temporaryDirectory.resolve("quantumultx-output");
+        EffectiveConfig base = TestConfigs.create(input, RuleType.MIHOMO, RuleDialect.CLASSICAL, outputDir,
+                List.of(TestConfigs.textOutput("quantumult-x.conf", RuleType.QUANTUMULT_X, RuleDialect.NONE)), false);
+
+        pipeline().process(base);
+
+        // 分流规则按 `类型, 匹配值, reject` 逐行写出, 关键词与网段分别对应 host-keyword / ip-cidr。
+        assertEquals("""
+                host-keyword, adserver, reject
+                ip-cidr, 10.0.0.0/8, reject
+                host-suffix, suffix.example, reject
+                host, exact.example, reject
+                """, Files.readString(outputDir.resolve("quantumult-x.conf")));
+    }
+
+    @Test
     void anchorsBareDomainRulesToAvoidSubstringFalsePositives() throws IOException {
         Path input = temporaryDirectory.resolve("bare-adblock.txt");
         Files.writeString(input, """

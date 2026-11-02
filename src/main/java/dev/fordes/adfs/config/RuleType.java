@@ -12,7 +12,8 @@ public enum RuleType {
     WILDCARD("wildcard"),
     MIHOMO("mihomo"),
     SING_BOX("sing-box"),
-    SMARTDNS("smartdns");
+    SMARTDNS("smartdns"),
+    QUANTUMULT_X("quantumult-x");
 
     private final String value;
 

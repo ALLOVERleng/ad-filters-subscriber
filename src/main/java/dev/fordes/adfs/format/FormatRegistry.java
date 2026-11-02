@@ -41,6 +41,7 @@ public final class FormatRegistry {
             RuleType.DNS, Set.of(RuleDialect.ADGUARD),
             RuleType.DNSMASQ, Set.of(RuleDialect.NONE),
             RuleType.WILDCARD, Set.of(RuleDialect.NONE),
+            RuleType.QUANTUMULT_X, Set.of(RuleDialect.NONE),
             RuleType.MIHOMO, Set.of(RuleDialect.DOMAIN, RuleDialect.IPCIDR, RuleDialect.CLASSICAL),
             RuleType.SING_BOX, Set.of(RuleDialect.NONE),
             RuleType.SMARTDNS, Set.of(RuleDialect.NONE),
@@ -68,6 +69,8 @@ public final class FormatRegistry {
             case DNSMASQ -> new DnsmasqParser(config.inputLimits(), config.rules());
             // 通配符产物是单向渲染: `*.domain` 与裸域行无法反推回去重所需的域名集合。
             case WILDCARD -> throw new ConfigurationException("通配符格式只能作为输出: " + input.name());
+            // Quantumult X 分流的策略字段由订阅方决定, 反解回统一规则模型只会丢失策略信息。
+            case QUANTUMULT_X -> throw new ConfigurationException("Quantumult X 分流规则只能作为输出: " + input.name());
             case MIHOMO -> switch (input.dialect()) {
                 case DOMAIN -> new MihomoDomainParser(config.inputLimits(), config.rules());
                 case IPCIDR -> new MihomoIpCidrParser(config.inputLimits(), config.rules());

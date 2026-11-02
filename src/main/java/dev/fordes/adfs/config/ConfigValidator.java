@@ -245,7 +245,7 @@ public final class ConfigValidator {
             case DNS -> dialect == RuleDialect.ADGUARD;
             case MIHOMO -> dialect == RuleDialect.CLASSICAL || dialect == RuleDialect.DOMAIN
                     || dialect == RuleDialect.IPCIDR;
-            case HOSTS, DNSMASQ, WILDCARD, SING_BOX, SMARTDNS -> dialect == RuleDialect.NONE;
+            case HOSTS, DNSMASQ, WILDCARD, QUANTUMULT_X, SING_BOX, SMARTDNS -> dialect == RuleDialect.NONE;
         };
         if (!supported) {
             throw new ConfigurationException("规则类型与方言不兼容: " + type.value() + " --> " + dialect.value());
@@ -258,7 +258,7 @@ public final class ConfigValidator {
             case ADBLOCK -> RuleDialect.CORE;
             case DNS -> RuleDialect.ADGUARD;
             case MIHOMO -> RuleDialect.CLASSICAL;
-            case HOSTS, DNSMASQ, WILDCARD, SING_BOX, SMARTDNS -> RuleDialect.NONE;
+            case HOSTS, DNSMASQ, WILDCARD, QUANTUMULT_X, SING_BOX, SMARTDNS -> RuleDialect.NONE;
         };
     }
 
@@ -267,7 +267,7 @@ public final class ConfigValidator {
         boolean supported = switch (type) {
             case MIHOMO -> container == ContainerFormat.TEXT || container == ContainerFormat.YAML;
             case SING_BOX -> container == ContainerFormat.JSON;
-            case ADBLOCK, DNS, HOSTS, DNSMASQ, WILDCARD, SMARTDNS -> container == ContainerFormat.TEXT;
+            case ADBLOCK, DNS, HOSTS, DNSMASQ, WILDCARD, QUANTUMULT_X, SMARTDNS -> container == ContainerFormat.TEXT;
         };
         if (!supported) {
             throw new ConfigurationException(
@@ -280,7 +280,7 @@ public final class ConfigValidator {
         return switch (type) {
             case MIHOMO -> ContainerFormat.YAML;
             case SING_BOX -> ContainerFormat.JSON;
-            case ADBLOCK, DNS, HOSTS, DNSMASQ, WILDCARD, SMARTDNS -> ContainerFormat.TEXT;
+            case ADBLOCK, DNS, HOSTS, DNSMASQ, WILDCARD, QUANTUMULT_X, SMARTDNS -> ContainerFormat.TEXT;
         };
     }
 

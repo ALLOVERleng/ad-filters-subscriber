@@ -46,8 +46,12 @@ GitHub Actions 每 8 小时拉取 **36 个远程上游 + 1 个本地补充列表
 | `wildcard.txt`         | 星号通配 | 每行 `*.domain` | [link][wildcard-raw] | [link][wildcard-ghproxy] | [link][wildcard-jsdelivr] |
 | `smartdns.txt`         | SmartDNS | `address /domain/#` | [link][smartdns-raw] | [link][smartdns-ghproxy] | [link][smartdns-jsdelivr] |
 | `clash.yaml`           | Mihomo | 域名规则集（YAML `payload` 列表） | [link][clash-raw] | [link][clash-ghproxy] | [link][clash-jsdelivr] |
-| `sing-box.json`        | sing-box | 规则集（JSON） | [link][sing-box-raw] | [link][sing-box-ghproxy] | [link][sing-box-jsdelivr] |
-| `quantumult-x.conf`    | Quantumult X | 分流规则 `host\|host-suffix\|host-keyword, 值, reject` | [link][quantumultx-raw] | [link][quantumultx-ghproxy] | [link][quantumultx-jsdelivr] |
+| `sing-box.json`        | sing-box | 规则集（JSON） | [link][sing-box-raw] | [link][sing-box-ghproxy] | —（超 20 MB） |
+| `quantumult-x.conf`    | Quantumult X | 分流规则 `host\|host-suffix\|host-keyword, 值, reject` | [link][quantumultx-raw] | [link][quantumultx-ghproxy] | —（超 20 MB） |
+
+> [!NOTE]
+> `sing-box.json` 与 `quantumult-x.conf` 当前约 **30 MB**，超过 jsDelivr 单文件 20 MB 上限，因此不提供 jsDelivr 链接，
+> 请使用 GitHub 直链或 ghproxy。其余文件均在 20 MB 以内，但体积随上游变化，可到 `release` 分支查看实际大小。
 
 ### 选择哪一份
 
@@ -80,6 +84,7 @@ GitHub Actions 每 8 小时拉取 **36 个远程上游 + 1 个本地补充列表
 | 浏览器产物不含纯域名阻断 | `easylist` / `ubo` / `abp` 体积可控 | 纯域名阻断在 DNS 类产物里已完整覆盖，浏览器侧再写一遍只是翻倍 |
 | `wildcard.txt` 不覆盖根域 | 每个域名只需一行，体积最小 | 后缀规则统一写成 `*.domain`，`*` 只匹配子域，根域需由 `dns.txt` / `hosts.txt` 补齐；精确主机仍以裸域名行保留 |
 | 站点限定规则被丢弃 | hosts / DNS 产物条数少于浏览器产物 | `$domain=` 无法在域名格式里保真，放大成整域会误伤 |
+| 超限产物不提供 jsDelivr | `sing-box.json`、`quantumult-x.conf` 只有 GitHub / ghproxy 两种取用方式 | 两个文件约 30 MB，超出 jsDelivr 单文件 20 MB 上限 |
 
 ## 产物是怎么来的
 
@@ -315,7 +320,6 @@ java -jar build/libs/adfs-*-all.jar -c config/application.yaml
 [clash-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@release/clash.yaml
 [sing-box-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/sing-box.json
 [sing-box-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/sing-box.json
-[sing-box-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@release/sing-box.json
 [quantumultx-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/quantumult-x.conf
 [quantumultx-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/quantumult-x.conf
-[quantumultx-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@release/quantumult-x.conf
+

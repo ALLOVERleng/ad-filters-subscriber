@@ -37,10 +37,13 @@ adfs:
       path: https://filters.adtidy.org/android/filters/22_optimized.txt
       type: adblock
 
+    # 上游仓库已删除(GitHub API 与 raw 均返回 404), 规则集停止维护。
+    # 标为可选源, 避免单点 404 让整批产物停更; 内容由下方同作者的合并列表一并提供。
     - name: xndeye web-ad-rule
       path: https://raw.githubusercontent.com/xndeye/web-ad-rule/master/easylist.txt
       type: adblock
       dialect: adguard
+      optional: true
 
     - name: ABP 反广告过滤
       path: https://easylist-downloads.adblockplus.org/abp-filters-anti-cv.txt

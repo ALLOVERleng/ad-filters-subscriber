@@ -1,0 +1,79 @@
+name: 漏拦截反馈
+description: 广告、弹窗或跟踪请求没有被拦住
+title: "[漏拦截] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        漏拦截通常有两类原因：上游列表本身没收录，或该形态无法用当前产物表达（例如域名级产物挡不住同域下的路径级广告）。
+        反馈时说明清楚形态，能帮助判断属于哪一类。
+
+  - type: textarea
+    id: symptom
+    attributes:
+      label: 现象
+      description: 什么广告没被拦，出现在哪个页面
+      placeholder: example.com 首页右侧信息流广告一直显示
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: 广告形态
+      multiple: true
+      options:
+        - 横幅 / 图片广告
+        - 视频贴片 / 前贴
+        - 弹窗 / 浮层
+        - 信息流 / 原生广告
+        - 跟踪 / 统计请求
+        - 其他
+    validations:
+      required: true
+
+  - type: dropdown
+    id: artifact
+    attributes:
+      label: 订阅的产物
+      multiple: true
+      options:
+        - easylist.url.txt
+        - easylist.element.txt
+        - ubo.url.txt
+        - ubo.element.txt
+        - abp.url.txt
+        - abp.element.txt
+        - dns.txt
+        - hosts.txt
+        - dnsmasq.txt
+        - wildcard.txt
+        - smartdns.txt
+        - clash.yaml
+        - sing-box.json
+        - quantumult-x.conf
+    validations:
+      required: true
+
+  - type: input
+    id: client
+    attributes:
+      label: 客户端与版本
+      placeholder: uBlock Origin 1.62 / AdGuard for Android 4.8
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 请求地址或截图
+      description: 可选。开发者工具里看到的广告请求 URL、或拦截器日志中的记录
+      render: text
+      placeholder: https://ads.example.com/slot.js
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: 确认
+      options:
+        - label: 我已确认该形态用域名级产物（dns.txt / hosts.txt）无法拦截

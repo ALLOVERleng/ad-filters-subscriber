@@ -98,7 +98,35 @@ public final class ConfigValidator {
         RuleDialect dialect = resolveDialect(type, properties.getDialect());
         SourceLocation source = parseSource(properties.getPath(), workingDir, name);
         return new InputSpec(name, source, type, dialect, normalizeExclusions(properties.getExclude()),
-                properties.isOptional());
+                properties.isOptional(), parseFallback(properties.getFallback(), source, workingDir, name));
+    }
+
+    /**
+     * 备用地址与主地址走同一套解析，但会跳过空白项、与主地址相同的项以及重复项：
+     * 重复地址既不会带来新结果，又会让失败日志重复一遍。
+     *
+     * <p>备用地址必须与主地址同为 HTTP 或同为本地路径——读取器是按主地址的类型选定的，
+     * 混合类型在运行期找不到匹配的读取器，不如在配置阶段直接报错。</p>
+     */
+    private static List<SourceLocation> parseFallback(List<String> values, SourceLocation primary,
+            Path workingDir, String name) {
+        if (values == null || values.isEmpty()) {
+            return List.of();
+        }
+        Set<SourceLocation> locations = new LinkedHashSet<>();
+        for (String value : values) {
+            if (value == null || value.isBlank()) {
+                continue;
+            }
+            SourceLocation location = parseSource(value, workingDir, name + " 的备用地址");
+            if (location.getClass() != primary.getClass()) {
+                throw new ConfigurationException("备用地址必须与主地址同为 HTTP 或同为本地路径: " + name);
+            }
+            if (!location.equals(primary)) {
+                locations.add(location);
+            }
+        }
+        return List.copyOf(locations);
     }
 
     /**

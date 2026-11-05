@@ -1,0 +1,77 @@
+name: 误杀反馈
+description: 正常站点或功能被本仓库的规则拦截了
+title: "[误杀] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提交前请先做两件小事，能省掉一轮来回：
+
+        1. 在订阅的产物文件里搜索被拦的域名（浏览器 Ctrl+F 即可），确认确实来自本仓库而不是客户端内置列表；
+        2. 如果只是个别域名，可先看 README 里 `whitelist` / `input[].exclude` 的写法，自行临时放行。
+
+  - type: textarea
+    id: symptom
+    attributes:
+      label: 现象
+      description: 哪个站点、哪个功能被拦，具体表现是什么（打不开 / 图片空白 / 无法登录等）
+      placeholder: 打开 example.com 的文章页时正文图片全部空白，禁用订阅后恢复正常
+    validations:
+      required: true
+
+  - type: input
+    id: domain
+    attributes:
+      label: 被拦的域名
+      description: 尽量给出精确域名，多个用逗号分隔
+      placeholder: cdn.example.com, img.example.com
+    validations:
+      required: true
+
+  - type: dropdown
+    id: artifact
+    attributes:
+      label: 订阅的产物
+      description: 在 release 分支根目录的文件名，可多选
+      multiple: true
+      options:
+        - easylist.url.txt
+        - easylist.element.txt
+        - ubo.url.txt
+        - ubo.element.txt
+        - abp.url.txt
+        - abp.element.txt
+        - dns.txt
+        - hosts.txt
+        - dnsmasq.txt
+        - wildcard.txt
+        - smartdns.txt
+        - clash.yaml
+        - sing-box.json
+        - quantumult-x.conf
+    validations:
+      required: true
+
+  - type: input
+    id: client
+    attributes:
+      label: 客户端与版本
+      placeholder: AdGuard for Windows 7.19 / uBlock Origin 1.62 / AdGuard Home 0.107
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 命中的规则行
+      description: 可选。在产物里搜到的具体规则行，或运行日志里的上游名称
+      render: text
+      placeholder: "||cdn.example.com^"
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: 确认
+      options:
+        - label: 我已确认该域名不在本仓库 `whitelist` 中
+        - label: 我已确认问题在禁用本仓库订阅后消失

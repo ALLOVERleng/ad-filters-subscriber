@@ -18,6 +18,12 @@ adfs:
       #   - "example.net"
       #   - "*.tracking.example.net"
       #   - "adserver"
+      # fallback 是备用地址：主地址打不开（HTTP 4xx/5xx、连接失败、本地文件缺失）时按顺序尝试，
+      # 全部失败才走 optional；解析阶段的语法错误不会触发备用源。必须与主地址同为 HTTP 或同为本地路径。
+      # 适用于 raw 域名被阻断、镜像抖动、上游换地址。与主地址重复的项、空白项会被忽略。
+      # fallback:
+      #   - https://gh-proxy.com/https://example.org/filter.txt
+      # optional: true 表示所有地址都读不到时跳过该源，不阻断整批产物（默认关闭，保持严格失败语义）。
 
     - name: local-hosts
       path: inputs/hosts.txt

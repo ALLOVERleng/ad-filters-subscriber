@@ -42,6 +42,14 @@ public final class InputProperties {
      */
     private boolean optional = false;
 
+    /**
+     * 备用地址: 主地址打不开时按声明顺序尝试, 全部失败才按 {@link #optional} 处理。
+     *
+     * <p>适用于上游换仓库或改文件名、镜像抖动、以及 raw 域名在部分网络下不可达的情况。
+     * 只覆盖"打不开"这一阶段, 解析阶段的语法错误不会重试备用地址。</p>
+     */
+    private List<String> fallback = List.of();
+
     public InputProperties(@Parameter int index) {
         this.index = index;
     }

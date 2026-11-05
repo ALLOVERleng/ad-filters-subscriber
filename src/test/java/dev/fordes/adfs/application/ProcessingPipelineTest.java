@@ -128,6 +128,45 @@ final class ProcessingPipelineTest {
     }
 
     @Test
+    void fallsBackToSecondaryLocationWhenPrimaryUnavailable() throws IOException {
+        Path primary = temporaryDirectory.resolve("missing-input.txt");
+        Path backup = temporaryDirectory.resolve("backup-input.txt");
+        Files.writeString(backup, "||backup.example^\n", StandardCharsets.UTF_8);
+        Path outputDir = temporaryDirectory.resolve("fallback-output");
+
+        EffectiveConfig base = TestConfigs.create(primary, RuleType.DNS, RuleDialect.ADGUARD, outputDir,
+                List.of(TestConfigs.textOutput("dns.txt", RuleType.DNS, RuleDialect.ADGUARD)), false);
+        InputSpec input = new InputSpec("fallback-input", new LocalSource(primary), RuleType.DNS,
+                RuleDialect.ADGUARD, List.of(), false, List.of(new LocalSource(backup)));
+        EffectiveConfig config = new EffectiveConfig(base.outputDir(), base.inputLimits(), base.http(),
+                base.rules(), base.conversion(), base.dns(), List.of(input), base.outputs());
+
+        pipeline().process(config);
+
+        // 主地址读取失败后改读备用地址, 产物按备用源的内容生成。
+        assertEquals("||backup.example^\n", Files.readString(outputDir.resolve("dns.txt")));
+    }
+
+    @Test
+    void reportsEveryCandidateWhenAllLocationsFail() throws IOException {
+        Path primary = temporaryDirectory.resolve("missing-primary.txt");
+        Path backup = temporaryDirectory.resolve("missing-backup.txt");
+        Path outputDir = temporaryDirectory.resolve("fallback-failure");
+        EffectiveConfig base = TestConfigs.create(primary, RuleType.DNS, RuleDialect.ADGUARD, outputDir,
+                List.of(TestConfigs.textOutput("dns.txt", RuleType.DNS, RuleDialect.ADGUARD)), false);
+        InputSpec input = new InputSpec("fallback-input", new LocalSource(primary), RuleType.DNS,
+                RuleDialect.ADGUARD, List.of(), false, List.of(new LocalSource(backup)));
+        EffectiveConfig config = new EffectiveConfig(base.outputDir(), base.inputLimits(), base.http(),
+                base.rules(), base.conversion(), base.dns(), List.of(input), base.outputs());
+
+        InputException failure = assertThrows(InputException.class, () -> pipeline().process(config));
+
+        // 两个地址都试过才失败, 错误信息里带上总次数。
+        assertTrue(failure.getMessage().contains("2 个地址均不可用"));
+        assertTrue(failure.getMessage().contains("missing-backup.txt"));
+    }
+
+    @Test
     void anchorsBareDomainRulesToAvoidSubstringFalsePositives() throws IOException {
         Path input = temporaryDirectory.resolve("bare-adblock.txt");
         Files.writeString(input, """

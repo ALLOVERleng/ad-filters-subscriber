@@ -166,6 +166,58 @@ final class ConfigValidatorTest {
         assertThrows(ConfigurationException.class, split::validate);
     }
 
+    @Test
+    void parsesFallbackSourcesAndDropsDuplicates() {
+        AdfsProperties adfs = new AdfsProperties();
+        adfs.setOutputDir(temporaryDirectory.resolve("output"));
+        InputProperties input = new InputProperties(0);
+        input.setName("remote");
+        input.setPath("https://raw.githubusercontent.com/owner/repo/main/list.txt");
+        input.setType("adblock");
+        input.setFallback(List.of(
+                "https://gh-proxy.com/https://raw.githubusercontent.com/owner/repo/main/list.txt",
+                "https://raw.githubusercontent.com/owner/repo/main/list.txt",
+                "https://gh-proxy.com/https://raw.githubusercontent.com/owner/repo/main/list.txt",
+                " "));
+        OutputProperties output = new OutputProperties(0);
+        output.setName("result.txt");
+        output.setType("adblock");
+
+        ConfigValidator validator = new ConfigValidator(adfs, new InputLimitProperties(), new HttpProperties(),
+                new RuleProperties(), new PreprocessorProperties(), new ConversionProperties(), new DnsProperties(),
+                new DnsCacheProperties(), List.of(input), List.of(output));
+
+        InputSpec spec = validator.validate().inputs().getFirst();
+
+        // 与主地址相同、重复以及空白的备用地址都会被丢掉, 只剩一条镜像地址。
+        assertEquals(1, spec.fallback().size());
+        assertEquals(2, spec.candidates().size());
+        assertEquals("https://gh-proxy.com/https://raw.githubusercontent.com/owner/repo/main/list.txt",
+                ((InputSpec.HttpSource) spec.fallback().getFirst()).uri().toString());
+    }
+
+    @Test
+    void rejectsFallbackOfDifferentKind() throws Exception {
+        Path inputPath = temporaryDirectory.resolve("local.txt");
+        Files.writeString(inputPath, "example.com\n");
+        AdfsProperties adfs = new AdfsProperties();
+        adfs.setOutputDir(temporaryDirectory.resolve("output"));
+        InputProperties input = new InputProperties(0);
+        input.setName("local");
+        input.setPath(inputPath.toString());
+        input.setType("hosts");
+        input.setFallback(List.of("https://example.com/list.txt"));
+        OutputProperties output = new OutputProperties(0);
+        output.setName("result.txt");
+        output.setType("hosts");
+
+        ConfigValidator validator = new ConfigValidator(adfs, new InputLimitProperties(), new HttpProperties(),
+                new RuleProperties(), new PreprocessorProperties(), new ConversionProperties(), new DnsProperties(),
+                new DnsCacheProperties(), List.of(input), List.of(output));
+
+        assertThrows(ConfigurationException.class, validator::validate);
+    }
+
     private static ConfigValidator validator(
             Path outputDir,
             Path inputPath,

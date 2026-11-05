@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 先看 README 的常见问题
+    url: https://github.com/ALLOVERleng/ad-filters-subscriber#常见问题
+    about: 误杀自查、根域未被 wildcard 覆盖、element/url 拆分的原因都写在里面。
+  - name: 查询规则来自哪个上游
+    url: https://github.com/ALLOVERleng/ad-filters-subscriber#上游规则
+    about: 上游规则本身的问题建议直接反馈给对应上游，改这里不会立刻生效。

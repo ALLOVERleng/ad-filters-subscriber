@@ -14,6 +14,9 @@ import jakarta.inject.Singleton;
 
 import dev.fordes.adfs.config.EffectiveConfig;
 import dev.fordes.adfs.config.InputSpec;
+import dev.fordes.adfs.config.InputSpec.HttpSource;
+import dev.fordes.adfs.config.InputSpec.LocalSource;
+import dev.fordes.adfs.config.InputSpec.SourceLocation;
 import dev.fordes.adfs.config.OutputSpec;
 import dev.fordes.adfs.config.RuleDialect;
 import dev.fordes.adfs.error.InputException;
@@ -111,7 +114,7 @@ public final class ProcessingPipeline {
             long parsedBefore = metrics.parsedCount();
             Path inputSpoolPath = runDir.resolve("input-" + inputIndex + ".bin");
             try (RuleSpool inputSpool = new RuleSpool(inputSpoolPath, config.rules().maxLength());
-                    SourceSession session = sourceReader.open(input, config)) {
+                    SourceSession session = open(sourceReader, input, config)) {
                 ParseResult result = parser.parse(session, entry -> {
                     RuleEntry normalized = RuleNormalizer.normalize(entry);
                     // 源级排除在落盘之前执行: 被排除的规则不参与去重、不进入任何产物,
@@ -146,6 +149,48 @@ public final class ProcessingPipeline {
             log.info("输入源「{}」解析完成, 耗时 {} ms", input.name(), (System.nanoTime() - started) / 1_000_000);
             inputIndex++;
         }
+    }
+
+    /**
+     * 打开输入源：主地址不可用时按声明顺序尝试备用地址。
+     *
+     * <p>只对“打不开”这一阶段做切换。HTTP 请求与状态码判定都在 {@code open} 内完成，
+     * 而解析阶段的语法错误不会触发备用源——同一份坏数据重读一遍不会变好，只会让日志翻倍。</p>
+     */
+    private static SourceSession open(SourceReader reader, InputSpec input, EffectiveConfig config) {
+        List<SourceLocation> candidates = input.candidates();
+        InputException lastFailure = null;
+        for (int index = 0; index < candidates.size(); index++) {
+            SourceLocation location = candidates.get(index);
+            try {
+                SourceSession session = reader.open(input.withSource(location), config);
+                if (index > 0) {
+                    log.warn("输入源「{}」已切换到备用地址: {}", input.name(), describe(location));
+                }
+                return session;
+            } catch (InputException exception) {
+                lastFailure = exception;
+                if (index + 1 < candidates.size()) {
+                    log.warn("输入源「{}」地址不可用, 改试备用地址 {}: {}", input.name(),
+                            describe(candidates.get(index + 1)), exception.getMessage());
+                }
+            }
+        }
+        if (lastFailure == null) {
+            throw new InputException("输入源没有可用地址: " + input.name());
+        }
+        if (candidates.size() == 1) {
+            throw lastFailure;
+        }
+        throw new InputException("输入源「" + input.name() + "」的 " + candidates.size()
+                + " 个地址均不可用: " + lastFailure.getMessage(), lastFailure);
+    }
+
+    private static String describe(SourceLocation location) {
+        return switch (location) {
+            case HttpSource http -> http.uri().toString();
+            case LocalSource local -> local.path().toString();
+        };
     }
 
     private void replay(

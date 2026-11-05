@@ -121,6 +121,7 @@ HTTP(S) 拉取 → 解析 → 归一化 → 源级 exclude → 去重 / 白名�
 | **元素 / URL 规则拆分** | adblock 文本输出默认拆成 `.element.txt` 与 `.url.txt`：元素文件只放 cosmetic 规则，`@@` 放行只写入 URL 文件，订阅方可按需取用；`split: false` 可退回单文件。 |
 | **站点作用域收敛** | `$domain=` 这类「只在指定站点生效」的规则在 hosts / DNS / dnsmasq / SmartDNS / Mihomo / sing-box 上无法保真，**直接丢弃**。放大成整域规则会让阻断误伤、让放行变成整域放行（例如只对某站点生效的 `@@\|\|raw.githubusercontent.com^$domain=...` 曾被放大成整域放行，抵消了对该域名上万条恶意 URL 的拦截）。 |
 | **分流规则的策略语义** | Quantumult X 分流的 `direct` 表示**直连**，不是「不拦截」：写成 `direct` 会把对应流量从代理里摘出去，改变订阅方的分流结果。因此 `@@` 放行、白名单域名只做减法（剔除阻断行），绝不写成 `direct`；`$domain=` 站点作用域与正则域名没有对应写法，同样直接丢弃。`hosts` 里的地址映射（`1.2.3.4 x`）也无法用分流表达，一并丢弃。 |
+| **备用地址 `fallback`** | 主地址打不开时按声明顺序尝试备用地址，全部失败才走 `optional`。只覆盖「打不开」这一阶段（HTTP 4xx/5xx、连接失败、本地文件缺失），**解析阶段的语法错误不会重试**——同一份坏数据重读一遍不会变好。适用于 raw 域名被阻断、镜像抖动、上游换地址；备用地址必须与主地址同为 HTTP 或同为本地路径，重复项与空白项会被忽略。 |
 | **可选输入 `optional`** | 给单个上游声明 `optional: true` 后，读取失败只记录「跳过可选来源」并继续处理其余源，不再让一个源的抖动导致整批产物停止更新。默认关闭以保持严格失败语义，当前用于 Gitflic 单点源 `Bypass Paywalls Clean filter` 与已删除的上游 `xndeye web-ad-rule`。 |
 | **浏览器产物裁剪** | `easylist` / `ubo` / `abp` 排除纯域名阻断（`exclude: [dns-domain]`），既避免和 DNS 产物重复，也避免超出 jsDelivr 的单文件体积上限。 |
 | **裸域名规则收紧** | 上游（实测 HyperADRules ads 有 17132 条）会把域名列表直接混进 adblock 文件。`ad.qq.com` 这种裸行在客户端是 **URL 子串匹配**，会连 `weread.qq.com`（结尾恰好是 `ad.qq.com`）一起拦掉。产物统一收紧为 `\|\|ad.qq.com^`，只覆盖该域及其子域；单标签（`ads`）、含通配符 / 路径、以及 `match-case` 规则保持原样，避免锚定后彻底失效。该转换记为 REDUCED，需要 `allow-reduction: true` 才会保留。识别逻辑对所有域名类产物（`dns` / `wildcard` / `hosts` / `dnsmasq` / `mihomo` 等）同样生效。 |
@@ -256,6 +257,8 @@ java -jar build/libs/adfs-*-all.jar -c config/application.yaml
 - 需要长期放行的通用域名：加入 `adfs.config.rules.whitelist`，所有格式的产物都会在写出前减掉；
 - 只是某个源暂时不可用：把该源设为 `optional: true`，避免它拖停整批产物。
 
+以上都解决不了时，按[反馈](#反馈)里的模板提 issue，记得附上命中的规则行。
+
 </details>
 
 <details>
@@ -274,14 +277,38 @@ java -jar build/libs/adfs-*-all.jar -c config/application.yaml
 
 </details>
 
+## 反馈
+
+误杀、漏拦截、上游失效、管线异常都可以提 issue，四种模板分别对应：
+
+| 类型 | 适用场景 | 需要提供 |
+|:-----|:---------|:---------|
+| [误杀反馈][issue-new] | 正常站点或功能被拦 | 被拦域名、订阅的产物、客户端与版本 |
+| [漏拦截反馈][issue-new] | 广告或跟踪没被拦住 | 广告形态、页面地址、请求 URL |
+| [上游失效][issue-new] | 某上游 404 / 超时 / 停更 | 上游名称与地址、日志片段、替代地址 |
+| [管线问题][issue-new] | 构建、生成、校验、发布出错 | 出问题的环节、复现命令、退出码与日志 |
+
+提交前建议先自查三步，很多问题可以就地解决：
+
+1. **确认来源**：在订阅的产物里搜被拦域名，确认规则确实来自本仓库，而不是客户端内置列表；
+2. **定位上游**：在 `logs/adfs.log` 里按域名搜索，日志会带上命中的上游名称；
+3. **临时放行**：个别域名加入 `adfs.config.rules.whitelist`；某个上游误报过多，用 `input[].exclude` 做源级排除。
+
+几条说明：
+
+- 产物每 8 小时重建一次。修复合并后请等下一次构建完成，再在客户端里手动刷新订阅；
+- **上游规则本身的增删**请优先反馈给对应上游（清单见[上游规则](#上游规则)），改本仓库的配置只会影响聚合结果；
+- 不接受政治敏感、商业推广类请求，也不处理「删除与广告无关域名」这类要求。
+
 ## 说明与免责
 
 - 产物文件由程序生成，请不要直接编辑 `release` 分支上的文件；如需调整，请修改 `config/application.yaml` 后重新生成。
 - 规则会随上游更新而变动，个别站点可能出现误杀。遇到误杀请先确认来源：可在运行日志中查看规则所属上游，再用 `adfs.input[].exclude` 做源级排除。
 - 本项目仅用于个人学习与自建订阅，不对规则的完整性、时效性与适用性作任何担保。
 
-> 本文档依据 `main` 分支当前实现编写，最近一次核对：2026-11-01。
+> 本文档依据 `main` 分支当前实现编写，最近一次核对：2026-11-05。
 
+[issue-new]: https://github.com/ALLOVERleng/ad-filters-subscriber/issues/new/choose
 [easylist-url-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/easylist.url.txt
 [easylist-url-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/easylist.url.txt
 [easylist-url-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@release/easylist.url.txt

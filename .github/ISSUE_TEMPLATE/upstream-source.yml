@@ -1,0 +1,53 @@
+name: 上游源失效
+description: 某个上游列表 404、超时、返回空内容或已停止维护
+title: "[上游失效] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        单一上游 404 曾导致整批产物停更（2026-11 的 `xndeye web-ad-rule` 就是这样）。
+        报上来之后可以选择：换成可用地址、给该源加 `optional: true`，或用 `exclude` 隔离误报。
+
+  - type: input
+    id: source
+    attributes:
+      label: 上游名称
+      description: "`config/application.yaml` 里 `input[].name` 的值"
+      placeholder: xndeye web-ad-rule
+    validations:
+      required: true
+
+  - type: input
+    id: url
+    attributes:
+      label: 上游地址
+      placeholder: https://raw.githubusercontent.com/owner/repo/master/easylist.txt
+    validations:
+      required: true
+
+  - type: dropdown
+    id: failure
+    attributes:
+      label: 失败类型
+      options:
+        - HTTP 404（文件或仓库不存在）
+        - HTTP 403 / 401
+        - 超时或连接失败
+        - 返回空内容 / 内容明显异常
+        - 已停止更新
+        - 其他
+    validations:
+      required: true
+
+  - type: textarea
+    id: detail
+    attributes:
+      label: 运行日志
+      description: 可选。日志里对应的 `HTTP 读取失败` 或 `可选输入源…已跳过` 片段
+      render: text
+
+  - type: input
+    id: alternative
+    attributes:
+      label: 替代地址
+      description: 可选。若你知道该规则集的新地址或镜像，请填在这里

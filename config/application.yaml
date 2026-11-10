@@ -142,6 +142,11 @@ adfs:
     - name: DNS-Kuner
       path: https://raw.githubusercontent.com/Kuner-mw/DNS-Kuner/main/FilterRules/blacklist.txt
       type: adblock
+      # 本源是「按厂商名整段通杀」的星号通配列表, L38 `*bytedance*` 会命中任何 URL 含该词
+      # 的请求(与已从 TT拒绝列表 剔除的 /.*bytedance.*/ 等价)。该通配只进 adblock 的 url
+      # 分片, 不进入域名类产物; 关键词在本源内只命中这一条, 其余字节段通配保持原样。
+      exclude:
+        - "bytedance"
 
     - name: DNS-Kuner Allow
       path: https://raw.githubusercontent.com/Kuner-mw/DNS-Kuner/main/FilterRules/allowlist.txt

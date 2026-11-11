@@ -102,6 +102,13 @@ adfs:
       type: adblock
       dialect: adguard
 
+    # 上游 AD-QGG(Gitee) 的裁剪快照: 只保留本仓产物未覆盖、且不与上游配套白名单冲突的域名。
+    # 上游地址与内容都不稳定(仓库 2026-11-11 重建、文件由 adguard.txt 改为 a、同日条数从
+    # 108632 变 14848、无 LICENSE), 因此锁定本地快照, 不做实时拉取; 更新时重跑裁剪脚本。
+    - name: 'AD-QGG 增量快照'
+      path: 'rules-src/ad-qgg.txt'
+      type: adblock
+
     - name: AdGuard Tracking Protection filter (Optimized)
       path: https://filters.adtidy.org/android/filters/3_optimized.txt
       type: adblock

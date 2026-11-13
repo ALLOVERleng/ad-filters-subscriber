@@ -49,12 +49,23 @@ jobs:
           mkdir -p logs
           java -jar "$(find build/libs -maxdepth 1 -name 'adfs-*-all.jar')" -c config/application.yaml
 
+      # 同一域名的阻断与放行同时进入产物时，客户端行为取决于规则顺序。
+      # 已知遗留登记在 scripts/conflicts-baseline.txt，出现新冲突即失败。
+      - name: Check block/allow conflicts
+        run: |
+          python3 scripts/check_conflicts.py dist/dns.txt \
+            --baseline scripts/conflicts-baseline.txt \
+            --report conflicts.txt
+
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: logs
-          path: logs/*.log
+          path: |
+            logs/*.log
+            conflicts.txt
+          if-no-files-found: ignore
 
       - name: Prepare release contents
         run: |

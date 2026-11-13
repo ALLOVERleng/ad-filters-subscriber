@@ -1,0 +1,19 @@
+# 已知的黑白名单冲突（棘轮基线）
+#
+# 该文件由 scripts/check_conflicts.py --baseline 读取：
+#   - 命中此清单的冲突视为"已知遗留"，不阻断构建；
+#   - 未命中即视为新增回归，构建失败。
+#
+# 目标是把本文件清空。每修好一条就删掉对应行，让闸门逐步收紧。
+# 生成方式：
+#   python3 scripts/check_conflicts.py dist/dns.txt --report conflicts.txt
+# 逐条确认来源（上游 / 规则形态）后再登记，禁止整批粘贴。
+#
+# 来源说明：以下 6 条在 AllowIndex 对齐裸域名判定后仍然冲突，其阻断侧不是
+# HyperADRules 的裸域名行，疑似来自正则或带路径 URL 规则的域名投影，待逐条定性。
+click.em.blizzard.com
+click.mail.macmillan.com
+cloudflareinsights.com
+sobot.com
+t7z.cupid.iqiyi.com
+wan.douyu.com

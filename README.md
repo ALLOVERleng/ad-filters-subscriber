@@ -30,28 +30,33 @@ GitHub Actions 每 8 小时拉取 **36 个远程上游 + 1 个本地补充列表
 
 ## 订阅地址
 
-全部文件位于 `release` 分支根目录，同一文件提供 GitHub / ghproxy / jsDelivr 三种取用方式。
+全部文件位于 `release` 分支根目录，体积允许时提供 GitHub / ghproxy / jsDelivr 三种取用方式
+（jsDelivr 单文件上限 20 MB，超出后只有前两种可用）。
 
-| 文件 | 格式 | 说明 | GitHub | ghproxy | jsDelivr |
-|------|:-----|:-----|:------:|:-------:|:--------:|
-| `easylist.url.txt`     | AdGuard | URL / 网络请求规则 | [link][easylist-url-raw] | [link][easylist-url-ghproxy] | [link][easylist-url-jsdelivr] |
-| `easylist.element.txt` | AdGuard | 元素隐藏 / 样式规则 | [link][easylist-element-raw] | [link][easylist-element-ghproxy] | [link][easylist-element-jsdelivr] |
-| `ubo.url.txt`          | uBO | URL / 网络请求规则 | [link][ubo-url-raw] | [link][ubo-url-ghproxy] | [link][ubo-url-jsdelivr] |
-| `ubo.element.txt`      | uBO | 元素隐藏规则 | [link][ubo-element-raw] | [link][ubo-element-ghproxy] | [link][ubo-element-jsdelivr] |
-| `abp.url.txt`          | ABP | URL / 网络请求规则 | [link][abp-url-raw] | [link][abp-url-ghproxy] | [link][abp-url-jsdelivr] |
-| `abp.element.txt`      | ABP | 元素隐藏规则 | [link][abp-element-raw] | [link][abp-element-ghproxy] | [link][abp-element-jsdelivr] |
-| `dns.txt`              | AdGuard DNS | 纯域名阻断（`\|\|domain^`） | [link][dns-raw] | [link][dns-ghproxy] | [link][dns-jsdelivr] |
-| `hosts.txt`            | hosts | `0.0.0.0 domain` | [link][hosts-raw] | [link][hosts-ghproxy] | [link][hosts-jsdelivr] |
-| `dnsmasq.txt`          | dnsmasq | `address=/domain/` | [link][dnsmasq-raw] | [link][dnsmasq-ghproxy] | [link][dnsmasq-jsdelivr] |
-| `wildcard.txt`         | 星号通配 | 每行 `*.domain` | [link][wildcard-raw] | [link][wildcard-ghproxy] | [link][wildcard-jsdelivr] |
-| `smartdns.txt`         | SmartDNS | `address /domain/#` | [link][smartdns-raw] | [link][smartdns-ghproxy] | [link][smartdns-jsdelivr] |
-| `clash.yaml`           | Mihomo | 域名规则集（YAML `payload` 列表） | [link][clash-raw] | [link][clash-ghproxy] | [link][clash-jsdelivr] |
-| `sing-box.json`        | sing-box | 规则集（JSON） | [link][sing-box-raw] | [link][sing-box-ghproxy] | —（超 20 MB） |
-| `quantumult-x.conf`    | Quantumult X | 分流规则 `host\|host-suffix\|host-keyword, 值, reject` | [link][quantumultx-raw] | [link][quantumultx-ghproxy] | —（超 20 MB） |
+| 文件 | 格式 | 说明 | 体积 | GitHub | ghproxy | jsDelivr |
+|------|:-----|:-----|-----:|:------:|:-------:|:--------:|
+| `easylist.url.txt`     | AdGuard | URL / 网络请求规则 | 25.0 MiB | [link][easylist-url-raw] | [link][easylist-url-ghproxy] | —（超 20 MB） |
+| `easylist.element.txt` | AdGuard | 元素隐藏 / 样式规则 | 8.8 MiB | [link][easylist-element-raw] | [link][easylist-element-ghproxy] | [link][easylist-element-jsdelivr] |
+| `ubo.url.txt`          | uBO | URL / 网络请求规则 | 24.7 MiB | [link][ubo-url-raw] | [link][ubo-url-ghproxy] | —（超 20 MB） |
+| `ubo.element.txt`      | uBO | 元素隐藏规则 | 6.4 MiB | [link][ubo-element-raw] | [link][ubo-element-ghproxy] | [link][ubo-element-jsdelivr] |
+| `abp.url.txt`          | ABP | URL / 网络请求规则 | 24.4 MiB | [link][abp-url-raw] | [link][abp-url-ghproxy] | —（超 20 MB） |
+| `abp.element.txt`      | ABP | 元素隐藏规则 | 5.3 MiB | [link][abp-element-raw] | [link][abp-element-ghproxy] | [link][abp-element-jsdelivr] |
+| `dns.txt`              | AdGuard DNS | 纯域名阻断（`\|\|domain^`） | 20.6 MiB | [link][dns-raw] | [link][dns-ghproxy] | —（超 20 MB） |
+| `hosts.txt`            | hosts | `0.0.0.0 domain` | 24.2 MiB | [link][hosts-raw] | [link][hosts-ghproxy] | —（超 20 MB） |
+| `dnsmasq.txt`          | dnsmasq | `address=/domain/` | 26.5 MiB | [link][dnsmasq-raw] | [link][dnsmasq-ghproxy] | —（超 20 MB） |
+| `wildcard.txt`         | 星号通配 | 每行 `*.domain` | 19.7 MiB | [link][wildcard-raw] | [link][wildcard-ghproxy] | —（已接近上限） |
+| `smartdns.txt`         | SmartDNS | `address /domain/#` | 26.8 MiB | [link][smartdns-raw] | [link][smartdns-ghproxy] | —（超 20 MB） |
+| `clash.yaml`           | Mihomo | 域名规则集（YAML `payload` 列表） | 24.3 MiB | [link][clash-raw] | [link][clash-ghproxy] | —（超 20 MB） |
+| `sing-box.json`        | sing-box | 规则集（JSON） | 35.0 MiB | [link][sing-box-raw] | [link][sing-box-ghproxy] | —（超 20 MB） |
+| `quantumult-x.conf`    | Quantumult X | 分流规则 `host\|host-suffix\|host-keyword, 值, reject` | 34.2 MiB | [link][quantumultx-raw] | [link][quantumultx-ghproxy] | —（超 20 MB） |
 
 > [!NOTE]
-> `sing-box.json` 与 `quantumult-x.conf` 当前约 **30 MB**，超过 jsDelivr 单文件 20 MB 上限，因此不提供 jsDelivr 链接，
-> 请使用 GitHub 直链或 ghproxy。其余文件均在 20 MB 以内，但体积随上游变化，可到 `release` 分支查看实际大小。
+> 14 个产物中只有 3 个 `*.element.txt` 小于 20 MB；其余 11 个已超过或逼近 jsDelivr 单文件上限，
+> 请使用 GitHub 直链或 ghproxy。体积随上游增长，实际大小以 `release` 分支为准。
+
+> [!IMPORTANT]
+> `dns.txt` 与 `hosts.txt` 可能包含 `<IP> <domain>` 形式的**地址映射行**（来自 hosts 类上游），与 `||domain^` 并存。
+> 这是设计内语义——保留上游给出的地址指向，不是格式错误；按域名阻断处理的客户端忽略其 IP 部分即可。
 
 ### 选择哪一份
 
@@ -59,19 +64,28 @@ GitHub Actions 每 8 小时拉取 **36 个远程上游 + 1 个本地补充列表
 （`exclude: [dns-domain]`）不会写进去——它们在浏览器里既无法覆盖全部子域，又会把文件撑到超出 jsDelivr 的 20 MB 上限。
 因此**浏览器列表 + 一份域名列表**才是完整组合。
 
-| 使用场景 | 推荐订阅 | 说明 |
-|:---------|:---------|:-----|
-| **AdGuard 客户端**（桌面 / 移动端 / 浏览器扩展） | `easylist.url.txt` + `easylist.element.txt` + `dns.txt` | 前两份负责 URL 级拦截与元素隐藏，`dns.txt` 补齐纯域名阻断 |
-| **uBlock Origin**（Firefox / Brave） | `ubo.url.txt` + `ubo.element.txt` + `dns.txt` | uBO 原生语法；`dns.txt` 同为 AdGuard 语法，可直接作为过滤器导入 |
-| **Adblock Plus** | `abp.url.txt` + `abp.element.txt` + `dns.txt` | ABP 原生语法 |
-| AdGuard Home / 路由器插件（域名级） | `dns.txt` | 只有域名维度，粒度比其他产物粗，但体积最小 |
-| Pi-hole / 路由器 hosts 方案 | `hosts.txt` | 域名级，兼容性最好 |
-| dnsmasq | `dnsmasq.txt` | 原生 `address=/domain/` 语法 |
-| Blocky / Technitium 等星号通配方案 | `wildcard.txt` | 每行 `*.domain`，**只覆盖子域**，根域需由 `dns.txt` / `hosts.txt` 补 |
-| SmartDNS | `smartdns.txt` | 原生 `address /domain/#` 语法 |
-| Mihomo / Clash.Meta | `clash.yaml` | 域名规则集（YAML） |
-| sing-box | `sing-box.json` | 规则集（JSON） |
-| **Quantumult X** | `quantumult-x.conf` | 分流规则，每行 `类型, 匹配值, reject`；只有「拒绝 / 直连 / 代理」，没有放行写法 |
+| 使用场景 | 推荐订阅 | 说明 | 支持放行 / 例外 |
+|:---------|:---------|:-----|:---------------:|
+| **AdGuard 客户端**（桌面 / 移动端 / 浏览器扩展） | `easylist.url.txt` + `easylist.element.txt` + `dns.txt` | 前两份负责 URL 级拦截与元素隐藏，`dns.txt` 补齐纯域名阻断 | 是（由 `dns.txt` 承担） |
+| **uBlock Origin**（Firefox / Brave） | `ubo.url.txt` + `ubo.element.txt` + `dns.txt` | uBO 原生语法；`dns.txt` 同为 AdGuard 语法，可直接作为过滤器导入 | 是 |
+| **Adblock Plus** | `abp.url.txt` + `abp.element.txt` + `dns.txt` | ABP 原生语法 | 是 |
+| AdGuard Home / 路由器插件（域名级） | `dns.txt` | 只有域名维度，粒度比其他产物粗，但体积最小 | 是 |
+| Pi-hole / 路由器 hosts 方案 | `hosts.txt` | 域名级，兼容性最好 | 否 |
+| dnsmasq | `dnsmasq.txt` | 原生 `address=/domain/` 语法 | 否 |
+| Blocky / Technitium 等星号通配方案 | `wildcard.txt` | 每行 `*.domain`，**只覆盖子域**，根域需由 `dns.txt` / `hosts.txt` 补 | 否 |
+| SmartDNS | `smartdns.txt` | 原生 `address /domain/#` 语法 | 否 |
+| Mihomo / Clash.Meta | `clash.yaml` | 域名规则集（YAML） | 否 |
+| sing-box | `sing-box.json` | 规则集（JSON） | 否 |
+| **Quantumult X** | `quantumult-x.conf` | 分流规则，每行 `类型, 匹配值, reject`；只有「拒绝 / 直连 / 代理」，没有放行写法 | 否 |
+
+> [!WARNING]
+> **只有能表达放行的产物**（adblock 三格式与 `dns.txt`）才保得住上游的 `@@` 例外。`hosts` / `dnsmasq` /
+> `wildcard` / `smartdns` / `clash` / `sing-box` / `quantumult-x` 无法表达放行，白名单条目会被静默丢弃——
+> 同一份白名单在不同产物里结果不同。**需要放行某个子域时请改用 `dns.txt`。**
+
+> [!NOTE]
+> 浏览器产物只剔除**来自 hosts / DNS 类输入**的纯域名阻断（`exclude: [dns-domain]`）。adblock 类上游自带的
+> `||domain^` 规则仍会保留，因此浏览器列表与 `dns.txt` 有大量重叠（当前版本约 48.5 万条），按上表组合订阅时属预期行为。
 
 > [!NOTE]
 > 已经是域名级方案（AdGuard Home、Pi-hole、dnsmasq、SmartDNS、Mihomo、sing-box、Quantumult X）时，**只订一份对应的域名列表**即可，
@@ -84,7 +98,7 @@ GitHub Actions 每 8 小时拉取 **36 个远程上游 + 1 个本地补充列表
 | 浏览器产物不含纯域名阻断 | `easylist` / `ubo` / `abp` 体积可控 | 纯域名阻断在 DNS 类产物里已完整覆盖，浏览器侧再写一遍只是翻倍 |
 | `wildcard.txt` 不覆盖根域 | 每个域名只需一行，体积最小 | 后缀规则统一写成 `*.domain`，`*` 只匹配子域，根域需由 `dns.txt` / `hosts.txt` 补齐；精确主机仍以裸域名行保留 |
 | 站点限定规则被丢弃 | hosts / DNS 产物条数少于浏览器产物 | `$domain=` 无法在域名格式里保真，放大成整域会误伤 |
-| 超限产物不提供 jsDelivr | `sing-box.json`、`quantumult-x.conf` 只有 GitHub / ghproxy 两种取用方式 | 两个文件约 30 MB，超出 jsDelivr 单文件 20 MB 上限 |
+| 超限产物不提供 jsDelivr | 除 3 个 `*.element.txt` 外，其余 11 个只有 GitHub / ghproxy 两种取用方式 | 单文件体积在 20–35 MiB 之间，均已超过或逼近 jsDelivr 的单文件 20 MB 上限 |
 
 ## 产物是怎么来的
 
@@ -123,7 +137,7 @@ HTTP(S) 拉取 → 解析 → 归一化 → 源级 exclude → 去重 / 白名�
 | **分流规则的策略语义** | Quantumult X 分流的 `direct` 表示**直连**，不是「不拦截」：写成 `direct` 会把对应流量从代理里摘出去，改变订阅方的分流结果。因此 `@@` 放行、白名单域名只做减法（剔除阻断行），绝不写成 `direct`；`$domain=` 站点作用域与正则域名没有对应写法，同样直接丢弃。`hosts` 里的地址映射（`1.2.3.4 x`）也无法用分流表达，一并丢弃。 |
 | **备用地址 `fallback`** | 主地址打不开时按声明顺序尝试备用地址，全部失败才走 `optional`。只覆盖「打不开」这一阶段（HTTP 4xx/5xx、连接失败、本地文件缺失），**解析阶段的语法错误不会重试**——同一份坏数据重读一遍不会变好。适用于 raw 域名被阻断、镜像抖动、上游换地址；备用地址必须与主地址同为 HTTP 或同为本地路径，重复项与空白项会被忽略。 |
 | **可选输入 `optional`** | 给单个上游声明 `optional: true` 后，读取失败只记录「跳过可选来源」并继续处理其余源，不再让一个源的抖动导致整批产物停止更新。默认关闭以保持严格失败语义，当前用于 Gitflic 单点源 `Bypass Paywalls Clean filter` 与已删除的上游 `xndeye web-ad-rule`。 |
-| **浏览器产物裁剪** | `easylist` / `ubo` / `abp` 排除纯域名阻断（`exclude: [dns-domain]`），既避免和 DNS 产物重复，也避免超出 jsDelivr 的单文件体积上限。 |
+| **浏览器产物裁剪** | `easylist` / `ubo` / `abp` 排除**来自 hosts / DNS 类输入**的纯域名阻断（`exclude: [dns-domain]`），减少与 DNS 产物的重复，也避免超出 jsDelivr 的单文件体积上限。 |
 | **裸域名规则收紧** | 上游（实测 HyperADRules ads 有 17132 条）会把域名列表直接混进 adblock 文件。`ad.qq.com` 这种裸行在客户端是 **URL 子串匹配**，会连 `weread.qq.com`（结尾恰好是 `ad.qq.com`）一起拦掉。产物统一收紧为 `\|\|ad.qq.com^`，只覆盖该域及其子域；单标签（`ads`）、含通配符 / 路径、以及 `match-case` 规则保持原样，避免锚定后彻底失效。该转换记为 REDUCED，需要 `allow-reduction: true` 才会保留。识别逻辑对所有域名类产物（`dns` / `wildcard` / `hosts` / `dnsmasq` / `mihomo` 等）同样生效。 |
 | **星号通配语义** | `wildcard.txt` 每行 `*.domain`，`*` 只匹配子域、**不匹配根域名本身**：`\|\|ad.qq.com^` 会写成 `*.ad.qq.com`，而精确主机（`\|domain\|`）写成裸域名行 `domain`。关键词与正则规则无法用单行星号表达，直接丢弃并计入报告。 |
 | **整目录原子发布** | 产物先落在暂存目录并通过清单校验，再整体替换 `dist/`；中途失败不会产生新旧混杂，配置里删掉的输出文件也不会残留。 |
@@ -311,40 +325,31 @@ java -jar build/libs/adfs-*-all.jar -c config/application.yaml
 [issue-new]: https://github.com/ALLOVERleng/ad-filters-subscriber/issues/new/choose
 [easylist-url-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/easylist.url.txt
 [easylist-url-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/easylist.url.txt
-[easylist-url-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@release/easylist.url.txt
 [easylist-element-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/easylist.element.txt
 [easylist-element-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/easylist.element.txt
 [easylist-element-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@release/easylist.element.txt
 [ubo-url-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/ubo.url.txt
 [ubo-url-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/ubo.url.txt
-[ubo-url-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@release/ubo.url.txt
 [ubo-element-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/ubo.element.txt
 [ubo-element-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/ubo.element.txt
 [ubo-element-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@release/ubo.element.txt
 [abp-url-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/abp.url.txt
 [abp-url-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/abp.url.txt
-[abp-url-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@release/abp.url.txt
 [abp-element-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/abp.element.txt
 [abp-element-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/abp.element.txt
 [abp-element-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@release/abp.element.txt
 [dns-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/dns.txt
 [dns-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/dns.txt
-[dns-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@release/dns.txt
 [hosts-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/hosts.txt
 [hosts-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/hosts.txt
-[hosts-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@release/hosts.txt
 [dnsmasq-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/dnsmasq.txt
 [dnsmasq-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/dnsmasq.txt
-[dnsmasq-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@release/dnsmasq.txt
 [wildcard-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/wildcard.txt
 [wildcard-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/wildcard.txt
-[wildcard-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@release/wildcard.txt
 [smartdns-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/smartdns.txt
 [smartdns-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/smartdns.txt
-[smartdns-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@release/smartdns.txt
 [clash-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/clash.yaml
 [clash-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/clash.yaml
-[clash-jsdelivr]: https://gcore.jsdelivr.net/gh/ALLOVERleng/ad-filters-subscriber@release/clash.yaml
 [sing-box-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/sing-box.json
 [sing-box-ghproxy]: https://ghproxy.net/https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/sing-box.json
 [quantumultx-raw]: https://raw.githubusercontent.com/ALLOVERleng/ad-filters-subscriber/refs/heads/release/quantumult-x.conf

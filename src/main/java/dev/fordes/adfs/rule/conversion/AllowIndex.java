@@ -26,10 +26,19 @@ import dev.fordes.adfs.rule.model.SafariRule;
  * <p>同一目标既有放行又有阻断时，客户端里放行优先、阻断规则根本不会生效，属于“无效规则”；
  * 默认保留白名单（放行）规则、剔除阻断规则。</p>
  *
+ * <p><b>例外：{@code $important}</b>。带该修饰符的阻断规则在客户端会压过例外规则，因此不参与
+ * 抵消（见 {@link #isImportant}）。</p>
+ *
  * <p>目标按<b>域名归一</b>：adblock 的 {@code ||x^}、DNS 的 {@code |x|}、hosts 的
  * {@code 0.0.0.0 x}、dnsmasq/smartdns 的地址赋值都落到同一个 {@code domain:x} 键上，
- * 因此即使黑白名单来自不同格式的不同上游，也能互相抵消。父域级别的覆盖不在这里处理，
- * 由 {@code rules.whitelist} 与 {@link WhitelistMatcher} 负责。</p>
+ * 因此即使黑白名单来自不同格式的不同上游，也能互相抵消。</p>
+ *
+ * <p><b>裸域名同样按域名归一</b>：上游会把域名列表直接混进 adblock 文件，{@code ads.example}
+ * 这种裸行在客户端是 URL 子串匹配，但写出阶段会被收紧成 {@code ||ads.example^}。若此处仍按
+ * {@code network:URL:...} 建键，就会与 {@code @@||ads.example^} 的 {@code domain:...} 永不相等，
+ * 导致同一域名的阻断与放行同时进入产物。收紧判定统一由 {@link BareDomain#of} 提供。</p>
+ *
+ * <p>父域级别的覆盖不在这里处理，由 {@code rules.whitelist} 与 {@link WhitelistMatcher} 负责。</p>
  */
 public final class AllowIndex {
 
@@ -48,7 +57,7 @@ public final class AllowIndex {
 
     /** 该阻断规则是否被同目标的放行规则覆盖。 */
     public boolean overrides(RuleEntry entry) {
-        if (allowed.isEmpty() || !isBlock(entry)) {
+        if (allowed.isEmpty() || !isBlock(entry) || isImportant(entry)) {
             return false;
         }
         String target = target(entry);
@@ -83,13 +92,40 @@ public final class AllowIndex {
         };
     }
 
+    /**
+     * 带 {@code $important} 的阻断规则不能被同目标的放行规则剔除。
+     *
+     * <p>{@code $important} 的语义就是"压过例外规则"：客户端遇到 {@code ||x^$important} 与
+     * {@code @@||x^} 并存时仍会拦截。若这里把它当普通阻断规则删掉，上游显式声明的高优先级
+     * 拦截会被静默丢弃，产物与客户端的真实行为相反。</p>
+     *
+     * <p>注意 {@code rules.whitelist} 走的是另一条路径（{@code WhitelistMatcher}），属于发布者
+     * 的编辑性剔除，不受此约束。</p>
+     */
+    private static boolean isImportant(RuleEntry entry) {
+        return switch (entry) {
+            case SafariRule safari -> isImportant(safari.rule());
+            case AdblockNetworkRule rule -> rule.important();
+            default -> false;
+        };
+    }
+
     private static String target(RuleEntry entry) {
         return switch (entry) {
             case SafariRule safari -> target(safari.rule());
             case DomainRule(DomainPattern pattern, _) -> domainTarget(pattern.value());
-            case AdblockNetworkRule rule -> rule.pattern().kind() == AdblockPattern.Kind.DOMAIN_ANCHOR
-                    ? domainTarget(rule.pattern().value())
-                    : "network:" + rule.pattern().kind() + ':' + rule.pattern().value();
+            case AdblockNetworkRule rule -> switch (rule.pattern().kind()) {
+                case DOMAIN_ANCHOR -> domainTarget(rule.pattern().value());
+                // 裸域名在写出阶段会被收紧成 ||domain^，冲突消解必须用同一目标键，
+                // 否则网络型键 network:URL:... 永远匹配不到放行侧的 domain:...。
+                // 带请求级修饰符的规则不是域名阻断（DNS 产物也会丢弃它们），保持原键。
+                case URL -> rule.modifiers().isEmpty()
+                        ? BareDomain.of(rule)
+                                .map(domain -> DOMAIN + domain.value())
+                                .orElseGet(() -> networkTarget(rule.pattern()))
+                        : networkTarget(rule.pattern());
+                case REGEX -> networkTarget(rule.pattern());
+            };
             case CosmeticRule rule -> "cosmetic:" + elementKind(rule.operator()) + ':'
                     + scope(rule) + ':' + rule.body();
             case HostMappingRule(_, DomainName hostname) -> DOMAIN + hostname.value();
@@ -107,6 +143,11 @@ public final class AllowIndex {
         return DOMAIN + DomainName.tryParse(value)
                 .map(DomainName::value)
                 .orElseGet(() -> value.strip().toLowerCase(Locale.ROOT));
+    }
+
+    /** 无法归一为域名的规则保留独立的网络型键，只在书写形式完全相同时互相抵消。 */
+    private static String networkTarget(AdblockPattern pattern) {
+        return "network:" + pattern.kind() + ':' + pattern.value();
     }
 
     private static String elementKind(CosmeticOperator operator) {

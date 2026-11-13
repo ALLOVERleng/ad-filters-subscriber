@@ -5,6 +5,8 @@
 这类规则解析为 URL 型、写出阶段才收紧成 ``||domain^``；若冲突消解与写出使用不同的
 目标键，同一域名的阻断与放行就会同时进入产物，客户端行为取决于规则顺序。
 
+例外：带 ``$important`` 的阻断规则在客户端压过例外规则，阻断结果确定，不计入冲突。
+
 用法::
 
     python3 scripts/check_conflicts.py dist/dns.txt
@@ -26,11 +28,12 @@ ALLOW = re.compile(r"^@@\|\|([^$^]+)\^")
 MAPPING = re.compile(r"^\d{1,3}(\.\d{1,3}){3}\s")
 
 
-def parse(path: str) -> tuple[set[str], set[str], int]:
-    """返回 (阻断域名集, 放行域名集, 地址映射行数)。"""
+def parse(path: str) -> tuple[set[str], set[str], int, int]:
+    """返回 (阻断域名集, 放行域名集, 地址映射行数, 带 $important 的阻断行数)。"""
     block: set[str] = set()
     allow: set[str] = set()
     mappings = 0
+    important = 0
     # utf-8-sig 兼容带 BOM 的手工编辑文件，避免首行规则被静默跳过。
     with open(path, encoding="utf-8-sig", errors="replace") as handle:
         for line in handle:
@@ -43,11 +46,15 @@ def parse(path: str) -> tuple[set[str], set[str], int]:
                 continue
             match = BLOCK.match(line)
             if match:
+                # $important 在客户端压过例外规则，阻断结果确定，不属于顺序敏感的冲突。
+                if "$important" in line:
+                    important += 1
+                    continue
                 block.add(match.group(1).strip().lower())
                 continue
             if MAPPING.match(line):
                 mappings += 1
-    return block, allow, mappings
+    return block, allow, mappings, important
 
 
 def load_baseline(path: str | None) -> set[str]:
@@ -83,7 +90,7 @@ def main() -> int:
 
     for path in args.paths:
         try:
-            block, allow, mappings = parse(path)
+            block, allow, mappings, important = parse(path)
         except OSError as error:
             print(f"无法读取 {path}: {error}", file=sys.stderr)
             return 2
@@ -94,6 +101,7 @@ def main() -> int:
 
         print(f"== {path}")
         print(f"   阻断 {len(block):,}  放行 {len(allow):,}  地址映射行 {mappings:,}（不参与判定）")
+        print(f"   $important 阻断 {important:,}（优先于放行，不参与判定）")
         print(f"   同目标冲突 {len(conflicts):,}  其中已知 {len(known):,}  新增 {len(fresh):,}")
 
         if args.report:

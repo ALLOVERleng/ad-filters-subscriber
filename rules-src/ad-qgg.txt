@@ -3,7 +3,7 @@
 ! Snapshot: 2026-11-11
 ! Scope: 仅保留本仓产物未覆盖、且不与上游配套白名单冲突的域名
 ! Removed: 重复项 / 基础设施整域封禁(amazonaws、cloudflare、githubusercontent 等) / 品牌服务主域(126.net、so.com、hdslb.com 等) / 上游白名单冲突项 / 非法域名
-! Rules: 3399
+! Rules: 3398
 
 ||ad.12306.com^
 ||ad.1688.com^
@@ -1518,7 +1518,6 @@
 ||click.yangkeduo.com^
 ||click.youdao.com^
 ||click.yy.com^
-||cloud.tencent.com^
 ||collect.autohome.com^
 ||collect.bdstatic.com^
 ||collect.migu.com^

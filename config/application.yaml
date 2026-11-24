@@ -295,21 +295,6 @@ adfs:
         - "github.githubassets.com"
         # 同一批 hosts 规则还把 raw 下载域硬编码到 146.75.48.133, 会破坏订阅与原始文件下载。
         - "raw.githubusercontent.com"
-        # QQ 客户端功能域: 这些子域被酷安/浮风/1Hosts 等源当作「广告/统计」收录, 但实测是
-        # Windows QQ 收藏链路的必经接口; 被 DNS 拦截后表现为「收藏失败」, 且因客户端内置
-        # HTTPDNS / 长连接, 系统 DNS 日志里往往看不到对应查询, 排查成本很高。
-        # qzpb = 收藏图片桶, jsapi = H5 与客户端通信桥, acc = 账号鉴权,
-        # masterconn* = 长连接入口, dns.qq.com = 腾讯 HTTPDNS 服务端。
-        - "qzpb.qq.com"
-        - "jsapi.qq.com"
-        - "acc.qq.com"
-        - "masterconn.qq.com"
-        - "masterconn2.qq.com"
-        - "masterconn11.qq.com"
-        - "dns.qq.com"
-        # ti = QQ 收藏/业务页宿主, imgcache = 图片缓存; 两者已被用户手工放行, 一并固化。
-        - "ti.qq.com"
-        - "imgcache.qq.com"
 
     conversion:
       # 精确主机(dns 语法的 |domain|)没有等价写法, 只能扩展为“域名+子域”;
